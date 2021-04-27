@@ -14,7 +14,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r, chunk 1}
 knitr::opts_chunk$set(
   #dev = "png",
   #dev.args = list(type = "cairo-png"),
@@ -28,7 +28,7 @@ This package was originally designed for the Post-analysis of CNV results inferr
 
 ## Installation and Prerequisites
 First, to run this package, we need to make sure that R (Version >= 3.5.2) is installed in your computer (R download link: https://www.r-project.org/). Once R is installed, the 'HandyCNV' package can be installed from Github repository by running the following script. If you rarely used R, it may take more time to install the 'HandyCNV' for the first time.
-```{r}
+```{r, chunk 2}
 #install.packages("remotes")
 #library(remotes)
 #install_github(repo = "JH-Zhou/HandyCNV")
@@ -44,7 +44,7 @@ To start playing with this package, we first need to prepare at least one CNV re
 We have provided some internal demo data, which should installed with package, in order to demonstrate how to use this package. We can access the demo data using the built-in R function `system.file` (see examples below). In the demo data, the first CNV results file is the default output from PennCNV with the ARS-UCD 1.2 (ARS) cattle reference genome. The second CNV results file contains the default output from CNVPartition with UMD 3.1 (UMD) cattle reference genome, and the third CNV list is an example of a standard input file that could be prepared from CNV results inferred by other tools.<br>
 
 Note: If you prefer not to test with this demo data, just skip this step to section 1 and use your own data instead.
-```{r}
+```{r, chunk 4}
 cnv_penn_ars <- system.file("extdata", "Demo_data/cnv_results/ARS_PennCNV_WGC.goodcnv", package = "HandyCNV")
 cnv_part_umd <- system.file("extdata", "Demo_data/cnv_results/UMD_CNVPartition.txt", package = "HandyCNV")
 cnv_other_umd <- system.file("extdata", "Demo_data/cnv_results/UMD_Standard_CNV.txt", package = "HandyCNV")
@@ -52,7 +52,7 @@ cnv_other_umd <- system.file("extdata", "Demo_data/cnv_results/UMD_Standard_CNV.
 
 ## Setting up a working directory
 To start the analysis, let's first set up the working directory. This will help ensure that all results will be saved in the same directory.
-```{r eval=FALSE}
+```{r, chunk 5}
 #setwd(dir = "C:/Users/handy_test") #remember to replace the path with your own 
 ```
 
@@ -71,7 +71,7 @@ We can use `cnv_clean` function to convert cnv results to standard format. This 
 a.  When formatting results in PennCNV format, the corresponding CNV input argument is 'penncnv'.
 b.  Default PennCNV results in Sample ID columns usually have the file path ahead the Sample ID. For example with the file "/home/zjhang027/C/final_403_penncnv/201094560082_R03C01.txt", the pattern 'cnv/' before the sample ID is unique, so we can take it as the separator using the argument `penn_id_sep = "cnv/"` to extract the wanted sample ID.
 
-```{r cnv_clean_penn, echo=TRUE, warning=FALSE}
+```{r, section 1, chunk 6}
 cnv <- cnv_clean(penncnv = cnv_penn_ars, #when running your own data, set this argument to 'penncnv = "localpath/file"'
                  penn_id_sep = "cnv/", #take the unique pattern as a separator to extract the sample ID 
                  drop_length = 5, # the maximum CNV length threshold (in Mb); CNVs larger than this value will be deleted
@@ -79,13 +79,13 @@ cnv <- cnv_clean(penncnv = cnv_penn_ars, #when running your own data, set this a
 ```
 
 Next, let's format a second set of CNV results, this time produced using CNVPartition. Note: The corresponding input argument is `cnvpartition` for CNV result from CNVPartition.
-```{r cnv_clean_part, echo=TRUE, warning=FALSE}
+```{r, chunk 7}
 cnv <- cnv_clean(cnvpartition = cnv_part_umd, #when running your own data, set this argument by 'cnvpartition = "localpath/file"' 
                  drop_length = 5, #the maximum CNV length threshold (in Mb); CNVs larger than this value will be deleted
                  folder = "cnv_clean") 
 ```
 If the CNV results were not produced by PennCNV or CNVPartition, we need to arrange the CNV results into the standard format, then use the `standard_cnv` argument instead. The standard CNV input list should include the following columns (in order):  `Sample_ID`, `Chr`, `Start`, `End` and `CNV_Value`.
-```{r table1, message=FALSE, warning=FALSE, results='asis'}
+```{r, chunk 8}
 tabl <- ("
 |Sample_ID           |Chr |Start   |End     |CNV_Value |
 |--------------------|----|--------|--------|----------|
@@ -97,7 +97,7 @@ tabl <- ("
 ```
 
 Let's now run `cnv_clean` on the third Standard CNV input file. Note that we are using the argument `standard_cnv` for the third CNV result.
-```{r}
+```{r, chunk 9}
 cnv <- cnv_clean(standard_cnv = cnv_other_umd, #when running your own data, set this argument by 'standard_cnv = "localpath/file"'
                  drop_length = 5, #the maximum CNV length threshold (in Mb); CNVs larger than this value will be deleted
                  folder = "cnv_clean")
@@ -148,7 +148,7 @@ cnv_visual(clean_cnv = "cnv_clean/penncnv_clean.cnv", #standard file was generat
 
 ### 2.3 How do we plot CNVs in a sample of interest?
 Here we need to assign both the Sample ID (to `individual_id`) and the clean CNV list (to `clean_cnv`) in the `cnv_visual` function. The individual CNV plot will saved in the current working directory. For example, the sample "201094560076_R03C02" has the most CNVs in the PennCNV results, so let's plot it and have a look. Note: we can use the `individual_cnv_count.txt` file (to be generated in section 3) to identify samples that exhibit large numbers of CNVs.
-```{r fig.show='hide', warning=FALSE}
+```{r, section 2.3}
 cnv_visual(clean_cnv = "cnv_clean/penncnv_clean.cnv", #standard file was generated by 'cnv_clean' function in section 1
            individual_id = "201094560076_R03C02", #set the sample ID  
            width_1 = 20, #optional, adjust the width of final plot
@@ -161,7 +161,7 @@ cnv_visual(clean_cnv = "cnv_clean/penncnv_clean.cnv", #standard file was generat
 The idea of plotting CNVs by target gene is to avoid making overly-strong statements when reporting important candidate genes after annotation for CNVRs. If we think that one particular gene is especially important in the CNV analysis, it's better to present the frequency at which that gene has a structural variation in the experimental population. Plotting CNVs by gene will directly present how many samples show copy number variations overlapping the gene. 
 
 Note: The input file 'cnv_annotation.txt' will be generated in section 5.2, as part of annotating the gene to CNV results.
-```{r fig.show='hide', warning=FALSE}
+```{r, section 2.4}
 dir.create("call_gene_Penn_UCSC")
 download.file("https://raw.githubusercontent.com/JH-Zhou/HandyCNV/master/vignettes/call_gene_Penn_UCSC/cnv_annotation.txt",destfile = "call_gene_Penn_UCSC/cnv_annotation.txt")
 
@@ -179,7 +179,7 @@ cnv_visual(clean_cnv = "call_gene_Penn_UCSC/cnv_annotation.txt", #here we need t
 
 ### 2.5 How can we present annotated genes above the CNV plot?
 To do this, we need to provide two input files to the `cnv_visual` function: the CNV list in `clean_cnv` and gene annotations in `refgene`. We should also set the genomic region we are interested in. The reference gene list will be generated by the `get_refgene` function in section 5.
-```{r, fig.show='hide', warning=FALSE}
+```{r, section 2.5}
 
 dir.create("refgene")
 
@@ -206,7 +206,7 @@ cnv_visual(clean_cnv = "cnv_clean/penncnv_clean.cnv", #standard file was generat
 ## 3. What types of summary plots are available?
 Using the clean CNV results, we can run the `cnv_summary_plot` function to generate a range of summary plots. These plots can aggregate CNV results by length group, CNV type, chromosome, and individual. It is also possible to make two different types of plots combining these figures.
 
-```{r cnv_summary_plot_penn, fig.show='hide', warning=FALSE}
+```{r cnv_summary_plot_penn}
 cnv_summary_plot(clean_cnv = "cnv_clean/cnvpart_clean.cnv", #standard file was generated by 'cnv_clean' function in section 1
                  length_group = c(0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1, 2, 5), # optional, set group of vectors to divide CNV length, unit is Mb. such as vector of ‘c(0.05, 0.3, 1)’, means divide the CNV length into four group: '<0.05Mb', '0.05 - 0.3Mb', '0.3-1Mb' and '>1Mb', maximum can accept 11 values
                  col_0 = "red", #optional, customize color for o copy CNV 
@@ -240,7 +240,7 @@ cnvr <- call_cnvr(clean_cnv = "cnv_clean/penncnv_clean.cnv", #standard file was 
 ```
 
 Next, let's generate CNVRs for CNVPartition and standard CNV lists. In order to avoid mixing the results among different files, we can set the `folder` argument to assign a distinguishing name to the newly generated folder. 
-```{r warning=FALSE, echo=TRUE, results='hide'}
+```{r warning=FALSE, echo=TRUE}
 call_cnvr(clean_cnv = "cnv_clean/cnvpart_clean.cnv", #standard file was generated by 'cnv_clean' function in section 1
                     chr_set = '29', 
                     folder = "call_cnvr_part")
@@ -256,18 +256,18 @@ Once we have defined some CNV regions, we might want to see how many genes are l
 
 ### 5.1 How do we download the reference gene lists we need?
 We can use the `get_refgene` function to automatically download the reference gene list and convert it to the standard format required for functions such as `call_gene`. First, let's run `get_refgene` without arguments to see which reference gene lists we can download. If you don't find the information you're looking for, please feel free to contact our maintainer to update it to you. For now, only reference gene lists from the UCSC website are supported; however, we may add more features if there is sufficient demand.
-```{r}
+```{r, section 5.1, chunk 19}
 get_refgene()
 ```
 
 Now, let's get the reference gene list for the PennCNV results. This dataset was generated using ARS-UCD 1.2 as reference genome. Two gene lists are available for this reference: `cow_ARS_UCSC` and `cow_ARS_ENS`. The suffix `ENS` indicates the Ensembl reference gene list. The gene list will be saved in the folder `refgene`, which will be created first if necessary.
-```{r}
+```{r, section 5.1, chunk 20}
 get_refgene(gene_version = "Cow_ARS_UCSC")
 get_refgene(gene_version = "Cow_ARS_ENS")
 ```
 
 Next let's get reference gene list for the CNVPartition and Standard result sets, both of which were generated on the UMD 3.1 reference genome; in this case, `Cow_UMD_UCSC` is the correct option to select.
-```{r}
+```{r, section 5.1, chunk 21}
 get_refgene(gene_version = "Cow_UMD_UCSC")
 ```
 
@@ -283,8 +283,8 @@ The `call_gene` function has three arguments:
 We suggest that both 'interval' and 'clean_cnv' should be set simultaneously: this will enable reporting of the frequency of all annotated genes by counting how many CNVs overlapped to each gene within a CNVR. In section 10, we will show how to use the output file `gene_freq_cnv.txt` to make comparisons between different CNV results to find sets of consensus genes.
 
 As an example, we will first call genes for the PennCNV results, ensuring that the gene list for the correct reference has been set (ARS 1.2). In this case, we are using the Ensembl-provided gene list.
-```{r}
-
+```{r, section 5.2, chunk 22}
+download.file("https://raw.githubusercontent.com/JH-Zhou/HandyCNV/master/vignettes/refgene/cow_ARS_ENS.txt",destfile = "refgene/cow_ARS_ENS.txt")
 call_gene(refgene = "refgene/cow_ARS_ENS.txt", #standard file was generated by 'get_refgene' function in section 5.1
           interval = "call_cnvr_penn/cnvr.txt", #optional, standard file was generated by 'call_cnvr' function in section 4
           clean_cnv = "cnv_clean/penncnv_clean.cnv", #optional, standard file was generated by 'cnv_clean' function in section 1
@@ -292,7 +292,7 @@ call_gene(refgene = "refgene/cow_ARS_ENS.txt", #standard file was generated by '
 ```
 
 We can also use the UCSC gene list: 
-```{r message=FALSE, echo=TRUE, results='hide'}
+```{r, section 5.2 chunk 23}
 call_gene(refgene = "refgene/cow_ARS_UCSC.txt", #standard file was generated by 'get_refgene' function in section 5.1
           interval = "call_cnvr_penn/cnvr.txt", #standard file was generated by 'call_cnvr' function in section 4
           clean_cnv = "cnv_clean/penncnv_clean.cnv", #optional, standard file was generated by 'cnv_clean' function in section 1
@@ -302,7 +302,7 @@ call_gene(refgene = "refgene/cow_ARS_UCSC.txt", #standard file was generated by 
 Comparing the results, we observe that the results from two reference gene lists are slightly different, likely because the maintainers of each database have different methodologies (and possibly data sources) for producing their gene annotations. As a result of this, the position and quantity of genes might slightly differ between gene builds even for the same reference genome. Therefore, it may be important to validate genes of interest in more than one database.
 
 Now, let's call genes for the CNVPartition results. As before, we provide both CNVR and CNV lists, and set the new folder name by arguments. Note that we need to use the UMD 3.1 reference build for this data set. We also run the standard CNV set (using the ARS1.2 reference).
-```{r message=FALSE, echo=TRUE, results='hide'}
+```{r, section 5.2, chunk 24}
 call_gene(refgene = "refgene/Cow_UMD_UCSC.txt", #standard file was generated by 'get_refgene' function in section 5.1
           interval = "call_cnvr_part/cnvr.txt", #standard file was generated by 'call_cnvr' function in section 4
           clean_cnv = "cnv_clean/cnvpart_clean.cnv", #optional, standard file was generated by 'cnv_clean' function in section 1
@@ -318,7 +318,7 @@ call_gene(refgene = "refgene/Cow_ARS_UCSC.txt", #standard file was generated by 
 The function `cnvr_plot` is used to plot the CNVR distribution across chromosomes. For this function, we only need to assign the a CNVR list file to the `cnvr` argument, and the reference genome assembly to the `assembly` argument (to provide chromosome lengths). For Bovine data, we provide data for both ARS and UMD. For other species with data available (see the `ref_gene` function in section 5.1), we can just assign the species name to the `assembly` argument, for example, `assembly = "human"` for human data.
 
 First, we'll plot the CNVR distribution for the PennCNV data set. The default legend position might not suitable for all species; the arguments `legend_x` and `legend_y` can be used to move it if necessary.
-```{r, fig.show='hide'}
+```{r, fig 9}
 cnvr_plot(cnvr = "call_cnvr_penn/cnvr.txt", #standard file was generated by 'call_cnvr' function in section 4
           assembly = "ARS", #cattle could select 'UMD' or 'ARS', other species could assign the name of species
           loss_col = "green2", #optional, adjust the color of Loss type of CNVR
@@ -333,7 +333,7 @@ cnvr_plot(cnvr = "call_cnvr_penn/cnvr.txt", #standard file was generated by 'cal
 ![Figure.9 CNVR distribution map for PennCRV data](cnvr_plot_penn/cnvr_plot.png){width=320px}
 
 Next, we plot the CNVRs derived from the CNVPartition data set.
-```{r, fig.show='hide'}
+```{r, fig 10}
 cnvr_plot(cnvr = "call_cnvr_part/cnvr.txt", #standard file was generated by 'call_cnvr' function in section 4
           assembly = "UMD", #cattle could select 'UMD' or 'ARS', other species could assign the name of species
           loss_col = "darkorchid", #optional, adjust the color of Loss type of CNVR
@@ -351,7 +351,7 @@ cnvr_plot(cnvr = "call_cnvr_part/cnvr.txt", #standard file was generated by 'cal
 It always interesting to see which genomic regions have the highest frequencies of structure variation. To view these, we can plot all the high frequency regions using the `cnvr_plot` function.
 
 As an example, let's plot the PennCNV results. Remember to set a new folder name to save the results.
-```{r fig.show='hide', warning=FALSE, message=FALSE, echo=TRUE, results='hide'}
+```{r, section 7 fig}
 cnvr_plot(cnvr = "call_cnvr_penn/cnvr.txt", #standard file was generated by 'call_cnvr' function in section 4
           clean_cnv = "cnv_clean/penncnv_clean.cnv", #standard file was generated by 'cnv_clean' function in section 1
           refgene = "refgene/cow_ARS_ENS.txt", #standard file was generated by 'get_refgene' function in section 5.1
@@ -374,7 +374,7 @@ Typically, we will use multiple models and software packages when predicting and
 
 As an example let's compare the CNV prediction results for PennCNV and CNVPartition. Note that these results were generated using different reference builds, so the results of the comparison are currently rather meaningless (the physical coordinates of the CNVs will not line up across reference builds): this problem will be fixed in section 11 below.
 
-```{r, fig.show='hide'}
+```{r, section 8 fig}
 compare_cnv(cnv_def = "cnv_clean/cleancnv.cnv", #standard file was generated by 'cnv_clean' function in section 1
             cnv_tar = "cnv_clean/penncnv_clean.cnv", #standard file was generated by 'cnv_clean' function in section 1
             width_1 = 12, #optional, adjust the width of final plot
@@ -393,7 +393,7 @@ compare_cnv_PartUMD_Vs_PennUMD/combine.png{width=330px}
 ## 9. What about CNVRs?
 Similar to the `compare_cnv` function, we can use the `compare_cnvr` function to compare CNV regions. The same caveats apply with regard to the ensuring the two CNVR data sets were built on the same reference genome. Let's try to use `compare_cnvr` now with the CNVPartition and Standard data sets (as before, ignoring for now the fact that these were produced on different reference genomes).
 
-```{r, fig.show='hide'}
+```{r, section 9 fig}
 compare_cnvr(cnvr_def  = "call_cnvr_part/cnvr.txt", #standard file was generated by 'call_cnvr' function in section 4
              cnvr_tar  = "call_cnvr_standard/cnvr.txt", #standard file was generated by 'call_cnvr' function in section 4
              width_1 = 8, #optional, adjust the width of comparison plot
@@ -412,7 +412,7 @@ compare_cnvr_PartUMD_Penn_UMD/combine_cnvr.png {width=320px}
 One of the most interesting parts of CNV analysis is to find out which genes are affected by structure variations, and to check out the frequency of these aberrant genes in our samples. After using the `call_gene` function in section 5.2, we now have the gene frequency list for each CNV result set. We can take these lists as input in the `compare_gene` function to find the set of consensus genes common to multiple CNV results.
 
 Now, let's compare the annotated gene lists for the PennCNV and CNVPartition results as an example. We can assign the arguments `gene_freq_1` and `gene_freq_2` with the `gene_freq_cnv.txt` files from the `call_gene_Part` and `call_gene_Penn` output folders created earlier. Then we need to set an integer threshold (`common_gene_threshold`) for the number of observations required to declare that a gene is "commom". In our example, the sample size is 400, so for a prevalence of 5%, the `common_gene_threshold` could calculated as `400 * 5% = 20`. 
-```{r, fig.show='hide'}
+```{r, section 10 fig 14}
 compare_gene(gene_freq_1 = "call_gene_Part/gene_freq_cnv.txt", #standard file was generated by 'call_gene' function in Section 5.2
              gene_freq_2 = "call_gene_Penn_Ens/gene_freq_cnv.txt", #standard file was generated by 'call_gene' function in Section 5.2
              title_1 = "Bovine Part", #optional, adjust the title of input file 1 present in final plot 
@@ -430,7 +430,7 @@ compare_gene(gene_freq_1 = "call_gene_Part/gene_freq_cnv.txt", #standard file wa
 
 We can also compare the frequency lists for three genes, just by adding one more input file (using the `gene_freq_3` argument); in this case, the comparison figure will be a 3D plot.
 
-```{r, fig.show='hide'}
+```{r, fig 15}
 
 compare_gene(gene_freq_1 = "call_gene_Part/gene_freq_cnv.txt", #standard file was generated by 'call_gene' function in Section 5.2
              gene_freq_2 = "call_gene_Penn_Ens/gene_freq_cnv.txt", #standard file was generated by 'call_gene' function in Section 5.2
@@ -443,10 +443,10 @@ compare_gene(gene_freq_1 = "call_gene_Part/gene_freq_cnv.txt", #standard file wa
              width_1 = 5.8, #optional, adjust the width of final plot
              folder = "compare_gene_three_lists")
 ```
-![Figure.15 Comparison of three gene lists](compare_gene_three_lists/threegene.png){width=320px}
+
 
 If we add a fourth gene frequency lists, by adding the `gene_freq_4` argument, the comparison figure produced will be a heat-map rather than a scatterplot.
-```{r, fig.show='hide'}
+```{r, fig 16}
 compare_gene(gene_freq_1 = "call_gene_Part/gene_freq_cnv.txt", #standard file was generated by 'call_gene' function in Section 5.2
              gene_freq_2 = "call_gene_Penn_UCSC/gene_freq_cnv.txt", #standard file was generated by 'call_gene' function in Section 5.2
              gene_freq_3 = "call_gene_Part/gene_freq_cnv.txt", #standard file was generated by 'call_gene' function in Section 5.2
@@ -471,7 +471,7 @@ The ten functions we've run so far only require users to provide the CNV results
 ## 11. How can we create the map file used in `HandyCNV`, to allow comparing CNVs between different reference genomes?
 We can use the `convert_map` function to prepare a map file; generally, we will need one for each reference file. In our examples, we have used the two bovine reference genomes ARS-UCD 1.2 and UMD 3.1. For `HandyCNV`, map files hould have the format shown in the table below, with the four columns `Chromosome`, `SNP`, `MorganPos`， and `PhysicalPos`. If the centiMorgan position (`MorganPos`) is unknown, we can assign the missing value as `0`, or provide the phyisical position in megabases. This format is the same as the standard `.map` format used in Plink and other software, and can be exported from GenomeStudio. The column names are not required.
 
-```{r table2, echo=TRUE, message=FALSE, warning=FALSE, results='asis'}
+```{r, table2}
 tabl <- ("
 -----------------------------------------
 Chr   SNP           MorganPos PhysicalPos
@@ -485,13 +485,13 @@ Chr   SNP           MorganPos PhysicalPos
 ```
 
 Here, we have the map files for both bovine references included in the package, at the following paths:
-```{r}
+```{r, chunk 34}
 ars_map <- system.file("extdata", "Demo_data/map/ARS1.2_GGPHDV3.map", package = "HandyCNV")
 umd_map <- system.file("extdata", "Demo_data/map/UMD3.1_Bovine.map", package = "HandyCNV")
 ```
 The function will not only generate map files, for use in `compare_cnv` and `compare_cnvr`, it will also generate map file used in Plink and PennCNV for both inputs. The conversion process also compares the two input maps and produces summary tables and figures.
 
-```{r fig.show='hide', warning=FALSE}
+```{r, fig 17}
 convert_map(default_map = umd_map, #when running your own data, set this argument to 'default_map = "localpath/file"'
             target_map = ars_map, #when running your own data, set this argument to 'target_map = "localpath/file"'
             chr_set = 30,
@@ -522,7 +522,7 @@ c.  Signal Intensity file (In general it export from GenomeStudio which used in 
 d.  Map file (Four columns used in Plink or generated by 'convert_map' function)
 e.  Genotype files (generated by Plink with '--make-bed' flag which include BED, BIM, FAM three files)
 
-```{r fig.show='hide', warning=FALSE, message=FALSE}
+```{r, section 12.1}
 dir.create("Demo_data")
 download.file("https://raw.githubusercontent.com/JH-Zhou/HandyCNV/master/vignettes/Demo_data/demo_intensity.txt",destfile = "Demo_data/demo_intensity.txt")
 
@@ -556,7 +556,7 @@ plot_cnvr_panorama(cnvr = "call_cnvr_penn/cnvr.txt", #standard file was generate
 ![Figure.19 Example of CNVR Panorama with LD_Heatmap](cnvr_panorama_heat_ld/7_310937_435584_Mixed.png){width=150px}
 
 For LD, we can replace the heatmap with the classic inverted triangle diagram by setting the argument `ld_heat = FALSE`, which will use the `gaston` package to plot LD. Because this requires converting the figure to `ggplot` format (via the `ggplotify` package), this process can be time consuming, and sometimes does not work well for large genomic regions. Therefore, we suggest that you use `ld_heat = TRUE` initially, before narrowing in on a particular region  of interest to display with the classic LD plot.
-```{r eval=FALSE, warning=FALSE, include=FALSE, results='hide'}
+```{r, section 12.2}
 plot_cnvr_panorama(cnvr = "call_cnvr_penn/cnvr.txt", #standard file was generated by 'call_cnvr' function in section 4
                    cnv_annotation = "call_gene_Penn_UCSC/cnv_annotation.txt", #standard file was generated by 'call_gene' function in Section 5.2
                    intensity = "Demo_data/demo_intensity.txt", 
@@ -575,7 +575,7 @@ plot_cnvr_panorama(cnvr = "call_cnvr_penn/cnvr.txt", #standard file was generate
                    height_1 = 30,
                    folder = "cnvr_panorama_classical_ld")
 ```
-![Figure.20 Example of CNVR Panorama with Classical_LD](cnvr_panorama_classical_ld/7_310937_435584_Mixed.png){width=150px}
+
      
 ## 13. How can we make a plot to show the source of the CNVs? 
 CNVs are heritable: with the pedigree information, particularly for the sires in a livestock context, we can produce plots of CNV sources. The `plot_cnvr_source` function can produce plots by sire, herd, and sire source. Sire source can be any freeform text, for example the country of origin. The expected input format is comma-separated (with a header), containing the following columns (in any order):
@@ -585,7 +585,7 @@ CNVs are heritable: with the pedigree information, particularly for the sires in
 *  `Sire_ID`
 *  `Sire_Source`
 
-```{r warning=FALSE, message=FALSE, echo=TRUE, results='hide'}
+```{r, section 13}
 plot_cnvr_source(cnvr = "call_cnvr_penn/cnvr.txt", #standard file was generated by 'call_cnvr' function in section 4
                 clean_cnv = "cnv_clean/penncnv_clean.cnv", #standard file was generated by 'cnv_clean' function in section 1
                 pedigree = system.file("extdata", "Demo_data/Pedigree/Pedigree.csv", package = "HandyCNV"), 
@@ -593,11 +593,11 @@ plot_cnvr_source(cnvr = "call_cnvr_penn/cnvr.txt", #standard file was generated 
                 height_1 = 20, 
                 width_1 = 15)
 ```
-![Figure.21 Plot Source of CNVR](plot_cnvr_source/Chr14_50.591566-54.441985Mb_Source.png){width=150px}
+
 
 ## 14. How can we plot just the genes in a specific region, to save as a seperate figure?
 The `plot_gene` function can do this for a specific reference gene set and genomic region.
-```{r, fig.show='hide'}
+```{r, section 14}
 plot_gene(refgene = "refgene/cow_ARS_UCSC.txt", 
           chr_id = 7, 
           start = 11, 
@@ -634,7 +634,7 @@ Visualising ROH is similar to visualising CNVs. The exception is that, because l
 
 ### 16.1 Plot ROH by Chromsome
 To plot a single chromosome, use the `chr_id` argument.
-```{r warning=FALSE, fig.show='hide'}
+```{r, section 16.1}
 roh_visual(clean_roh = "cnv_clean/cnvpart_roh.cnv", 
            chr_id = 6, 
            width_1 = 14, 
@@ -644,11 +644,11 @@ roh_visual(clean_roh = "cnv_clean/cnvpart_roh.cnv",
            col_mid = "blue", 
            col_long = "black")
 ```
-![Figure.24 ROH on Chromosome 6](roh_visual/Chr11_roh.png){width=300px}
+
 
 ### 16.2 Plot ROH by single region
 To plot a single region of interest, add the `start_position` and `end_position` arguments (units in megabases).
-```{r, fig.show='hide'}
+```{r, section 16.2}
 roh_visual(clean_roh = "cnv_clean/cnvpart_roh.cnv", 
            chr_id = 6, 
            start_position = 36.5, 
@@ -659,7 +659,7 @@ roh_visual(clean_roh = "cnv_clean/cnvpart_roh.cnv",
 
 ### 16.3 How can we present annotated genes above the ROH plot?
 To add a panel of gene locations, add the `refgene` argument, pointing to a file containing genes annotated on the appropriate reference genome.
-```{r, fig.show='hide', results='hide'}
+```{r, section 16.3}
 roh_visual(clean_roh = "cnv_clean/cnvpart_roh.cnv", 
            chr_id = 6, 
            start_position = 36.5, 
@@ -670,7 +670,7 @@ roh_visual(clean_roh = "cnv_clean/cnvpart_roh.cnv",
 
 
 If the ROH region has too many genes, plotting all the gene names will make the figure look too busy. We can choose the most important region(s) to plot using the `show_names` argument. In this example, we set two regions with the following argument: `show_name = c(37.28, 37.49, 38.25, 39.52)`. This will show the gene names in two regions:  (37.28 - 37.49 Mb) and (38.25 - 39.52 Mb).
-```{r fig.show='hide', warning=FALSE, results='hide'}
+```{r, fig 27}
 roh_visual(clean_roh = "cnv_clean/cnvpart_roh.cnv", 
            chr_id = 6, 
            start_position = 36.5, 
@@ -682,7 +682,7 @@ roh_visual(clean_roh = "cnv_clean/cnvpart_roh.cnv",
 
 ### 16.4 How do we plot the full length of ROH for all samples that had a ROH in a given region?
 Above, We have plotted ROH in an interested region, but that method can only plot short ROHs which located in the given region, it will remove some longer ROHs which are partially overlapped to the given interval, that method can made a nice picture but will lost some samples, it still useful because we already know the sample size in that region. But if we want to present the whole length of ROH overlapped to our interested region (Such as a region of target gene), we can assign a vector to 'target_region' argument in 'roh_visual' function.
-```{r fig.show='hide'}
+```{r, section 16.4}
 roh_visual(clean_roh = "cnv_clean/cnvpart_roh.cnv", 
            target_region = c(6,38.25,39.52), #within the vector, the first integer indicate Chromosome. the rest are the start and end point, unit in megabases
            col_short = "red", #optional
@@ -695,7 +695,7 @@ roh_visual(clean_roh = "cnv_clean/cnvpart_roh.cnv",
 
 ### 16.5 How do we plot ROHs on an interested sample?
 When we have some interested individuals, we can plot all the ROHs for these samples separately by setting the 'individual_id' arguments as following:
-```{r}
+```{r, section 16.5}
 roh_visual(clean_roh = "cnv_clean/cnvpart_roh.cnv", 
            individual_id = "201094560008_R04C01", 
            height_1 = 14, #optional 
@@ -712,23 +712,23 @@ ROH results will return us some long regions, but we may interested on some spec
 The 'get_haplotype' function can help us to get the haplotype for all samples by given region. But now the application is limited, it only accept the phased genotype by Beagle (Version 5.1) with physical position, we may expend the compatibility later if necessary. The standard format of phased genotype and demo data used at here can be download from our github repository (https://github.com/JH-Zhou/HandyCNV/tree/master/vignettes/OARS_chr6). Now, let's go ahead and make haplotypes. 
 
 Extracting the haplotype will take three steps and combine three functions. The first step is to prepare the standard format for 'HandyCNV'. We can use 'prepare_geno' function to prepare the phased genotype. After running, it will return three list files contain the map, genotype and the columns index file.
-```{r}
+```{r, chunk 47}
 download.file("https://raw.githubusercontent.com/JH-Zhou/HandyCNV/master/vignettes/OARS_chr6.vcf",destfile = "OARS_chr6.vcf")
 genotype <- prep_phased(phased_geno = "OARS_chr6.vcf") #'OARS_chr6.vcf' is the demo data, need to download and save it in your working directory 
 ```
 
 Second step, we need to assign the interested region. Here we take the *NCAPG* gene as example, it located on BTA6:37,332,024-37,378,129 bp. The idea in this step is to find out the closest SNPs in this SNP chip.
-```{r}
+```{r, chunk 48}
 region <- closer_snp(phased_input = genotype$map, #the map file in the list generated in 'pre_phased' function above
                      chr = 6, start = 37.332024, end = 37.378129) #physical position unit in 'megabases'
 ```
 
 Third step to get haplotype. It will return two lists contains the reocding haplotype and the index of recode type and the original haploid.
-```{r}
+```{r, chunk 49}
 haplotype <- get_haplotype(geno = genotype, pos = region)
 ```
 Now, we can count the frequency of each haplotype in our population and to check what the haploids are in these haplotypes.
-```{r}
+```{r, chunk 50}
 data.frame(table(haplotype$hap_type$Recode_Type, dnn = "Haplotype"))
 haplotype$hap_index
 ```
@@ -742,7 +742,7 @@ The `proxy_range` argument supports adjusting the genomic range to search and as
 The optional argument `len_diff_threshold` is a quality control measure on the newly converted intervals that imposes a maximum difference of length between converted and original intervals. Only intervals with remapped positions within `len_diff_threshold` basepairs of the original position will pass the threshold.
 
 Here, we convert the CNVPartition CNVR results from UMD3.1 coordinates to ARS1.2. The outputs are saved into the `convert_coord_penn_cnv` folder, and summary statistics about the conversion are displayed below.
-```{r}
+```{r, chunk 51}
 convert_coord(input_def = "cnv_clean/cleancnv.cnv", 
               def_tar_map = "convert_map/def_tar_map.map",
               proxy_range = 100000,
@@ -751,7 +751,7 @@ convert_coord(input_def = "cnv_clean/cleancnv.cnv",
 ```
 
 We can also convert coordinates from the target map to the default map. For example, let's convert the PennCNV ARS results to UMD 3.1. After converting the coordinates of CNVs or CNVRs, we could use the results which passed the quality check to make comparisons with the `compare_cnv` and `compare_cnvr` functions as section 8 and 9 described.
-```{r}
+```{r, chunk 52}
 convert_coord(input_def = "call_cnvr_standard/cnvr.txt", 
               proxy_range = 100000,
               len_diff_threshold = 100000,
