@@ -129,8 +129,44 @@ x <- a[10:(length(a)-1)] * 2
 x
 ```
 
+Coersing R data into different types such as conversions of objects
+```{r,conv1}
+a <- c(1.9,2.7,3.3,5.1,9.9,0)
+a
+as.integer(a)
+as.character(a)
+as.logical(a)
+as.factor(a)
 
+b <- c("abc","def","ghi","jkl")
+b
+as.numeric(b)
+as.logical(b)
+as.integer(b)
+my_factor <- as.factor(b)
+as.numeric(my_factor)
+```
 
+Creating random and semi random datas which are mostly used in simulation analysis
+```{r,sample1}
+nums <- 1:5
+sample(x = nums, size = 3)
+sample(x = nums, size = 5)
+sample(x = nums ,size = 10, replace = TRUE)
+```
+
+understanding how how to sample from distributions. Example: sampling 5 numbers from a normal distribution around a median of 10 and standard deviation of 2
+```{r,distributions1}
+d <- rnorm(n = 5, mean = 10, sd = 2)
+d
+```
+
+Example on sampling 20 numbers from a binomial distribution with a size of 50 and probability of 0.5
+```{r,distributions2}
+b <- rbinom(n = 20, size = 50, prob = 0.5)
+b
+mean(b)
+```
 
 
 ```{r cars}
