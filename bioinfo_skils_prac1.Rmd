@@ -1,0 +1,148 @@
+---
+title: "bioinformatics_prac1"
+author: "Mark"
+date: "06/05/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Getting started by improving my skills in R startting with arithmetic
+
+```{r,math1}
+1+2
+10000^2
+sqrt(64)
+```
+
+```{r,math2}
+s <- sqrt(64)
+s
+a <- 2
+b <- 5
+c <- a*b
+c
+```
+
+```{r,math3}
+c(1,2,3)
+sum(c(1,10,100))
+mean(c(1,10,100))
+median(c(1,10,100))
+max(c(1,10,100))
+min(c(1,10,100))
+```
+
+#saving objects in r and working on the objects
+we use `<-` to save objects nd `=` can also play same role 
+```{r, math4}
+a <- c(1,10,100)
+a
+2*a
+a+1
+sum(a)
+mean(a)
+median(a)
+sd(a)
+var(a)
+length(a)
+```
+
+Understanding R objects types
+```{r, math5}
+A <- c(1,10,100)
+A
+str(A)
+class(A)
+typeof(A)
+
+B <- 1:10
+B
+str(B)
+class(B)
+typeof(B)
+
+C <- c("prime1"=2, "prime2"=3, "prime3"=5, "prime4"=7)
+C
+str(C)
+class(C)
+typeof(C)
+
+D <- "x1" 
+D
+str(D)
+class(D)
+typeof(D)
+
+E <- c("x1", "y2", "z3")
+E
+str(E)
+names(E) <- c("code1","code2","code3")
+E
+str(E)
+class(E)
+typeof(E)
+```
+
+Understanding factors which are categorically used in R for biological sex data
+```{r, factors1}
+x <- factor(c("single", "married", "married", "single","defacto","widowed"))
+x
+str(x)
+levels(x)
+```
+
+```{r,factors2}
+y <- c("good", "very good", "fair", "poor","good")
+str(y)
+yy <- factor(y, levels = c("very poor","poor","fair","good","very good"),ordered = TRUE)
+yy
+str(yy)
+levels(yy)
+```
+
+Understanding the logical values in R which makes use of `TRUE/FALSE` a lot
+```{r, logicals}
+myvariable1 <- 0
+as.logical(myvariable1)
+myvariable2 <- 1
+as.logical(myvariable2)
+vals <- c(0,1,0,1,0,0,0,1,1,0,1,0,1,0)
+vals
+str(vals) 
+as.logical(vals)
+```
+
+Understanding how to subset vectors and save the results to a new variable
+```{r,vec_subset}
+a <- c(2:22,98,124,3002)
+a
+length(a)
+a[2]
+a[3:4]
+a[c(1,3)] 
+a[length(a)]
+a[(length(a)-1)]
+x <- a[10:(length(a)-1)] * 2
+x
+```
+
+
+
+
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
