@@ -168,17 +168,87 @@ b
 mean(b)
 ```
 
-
-```{r cars}
-summary(cars)
-```
-
 ## Including Plots
 
-You can also embed plots, for example:
+How to do a dot and line plot and also being bale to add extra lines, changing line colour and adding subheading
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r,dot1}
+a <- (1:10)^2
+a
+plot(a)
+plot(a,type="l")
+plot(a,type="b")
+
+plot(a,type="b")
+lines(a/2, type="b",col="red")
+mtext("Black:Growth of A. Red: growth of A/2")
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+how to plot a scatterplots and change the point and type (`pch`) size (`cex`), as well as add a main heading (`main`). including the possibility of being able to add series of points to the chart and adjust the axis limits with `xlim` and `ylim`
+
+```{r,scatter1}
+x_vals <- rnorm(n = 1000, mean = 10, sd = 2)
+x_vals
+d_error <- rnorm(n = 1000, mean = 1, sd = 0.1)
+d_error
+y_vals <- x_vals * d_error
+y_vals
+plot(x=x_vals, y=y_vals, xlab="my x values", ylab="my y values")
+
+plot(x=x_vals, y=y_vals, xlab="my x values", ylab="my y values",pch=19, cex=0.5, main="Plot of X and Y values")
+
+plot(x=x_vals, y=y_vals, xlab="my x values", ylab="my y values",pch=19, cex=0.5, main="Plot of X and Y values")
+points(x=x_vals, y=y_vals/2, pch=19, cex=0.5,col="blue")
+
+plot(x=x_vals, y=y_vals, xlab="my x values", ylab="my y values",pch=19, 
+     cex=0.5, main="Plot of X and Y values",
+     ylim=c(0,17))
+points(x=x_vals, y=y_vals/2, pch=19, cex=0.5,col="blue")
+```
+
+understanding how to run a linear regression
+
+```{r,scatter2}
+linear_regression_model <- lm(y_vals ~ x_vals)
+
+summary(linear_regression_model)
+
+SLOPE <- linear_regression_model$coefficients[1]
+INTERCEPT <- linear_regression_model$coefficients[2]
+
+HEADER <- paste("Slope:",signif(SLOPE,4),"Intercept:",signif(INTERCEPT,4))
+
+plot(x=x_vals, y=y_vals, xlab="my x values", ylab="my y values",pch=19, cex=0.5)
+abline(linear_regression_model,col="red",lty=2,lwd=3)
+mtext(HEADER)
+```
+
+Plotting of boxplots
+
+```{r,boxplots1}
+boxplot(x_vals, y_vals/2)
+boxplot(x_vals, y_vals/2, names=c("X values", "Y values"),ylab="Measurement (cm)")
+```
+
+plotting of histogramms and possibility of placing multiple charts on a  single image.
+
+```{r,histograms1}
+hist(x_vals)
+
+par(mfrow = c(2, 1))
+hist(x_vals,main="")
+hist(y_vals,main="")
+```
+
+## Session information
+
+For reproducibility.
+
+```{r,sessioninfo}
+sessionInfo()
+```
+
+
+
+
+
