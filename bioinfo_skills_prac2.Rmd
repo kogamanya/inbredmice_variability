@@ -482,6 +482,31 @@ For the TSV file located here: https://raw.githubusercontent.com/markziemann/SLE
 
 4. Make a pairs plot of the three datasets.
 
+## Answers to TSV file
+
+```{r, tsv1}
+URL="https://raw.githubusercontent.com/markziemann/SLE712_files/master/bioinfo_asst3_part1_files/mydata.tsv"
+x <- read.table(URL,header=TRUE,row.names = 1)
+head(x)
+```
+
+```{r,tsv2}
+colMeans(x)
+rowMeans(x)
+```
+
+```{r,tsv3}
+cor(x)
+
+library("gplots")
+heatmap.2(cor(x),trace="none",scale="none",margins = c(15,15))
+```
+
+```{r,tsv4}
+pairs(x)
+```
+
+
 
 ## Session information
 
