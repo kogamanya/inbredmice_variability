@@ -1,5 +1,5 @@
 ---
-title: "Bioinfomatics exercise of practice 1"
+title: "Bioinfomatics exercise of all sessions"
 author: "Kingsley"
 date: "10/05/2021"
 output: html_document
@@ -8,8 +8,9 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+# Session 1
 
-## Homework questions for group study
+## Homework questions for study
 
 1. calculate the sum of all integers numbers between 500 and 600
 
@@ -17,9 +18,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 3. Create the following datasets and plot a boxplot:
 
-  a. A Sample 10000 datapoints from a normal distribution with mean of 50 and SD of 5
+  a. A Sample 10000 datapoints from a normal distribution with mean of 50 and SD       of 5
   
-  b. A Sample 10000 datapoints from a normal distribution with mean of 50 and SD of 10 
+  b. A Sample 10000 datapoints from a normal distribution with mean of 50 and SD       of 10 
 
 4. Plot a and b above as a scatterplot, and plot the trend line.
 
@@ -105,5 +106,96 @@ hist(d,main="")
 hist(y_axis,main="")
 ```
 
+# Session 2
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Checking my understanding 
+
+solving the questions below.
+
+1. Create a scatterplot of mtcars weight (x axis) versus mpg (y axis). 
+Include x and y axis labels and a main heading.
+
+2. Sort mtcars by weight (wt) and create a horizontal barplot of wt values so heaviest ones at shown at the top of the bar plot.
+The plot should be labeled so it is clear to see which bar belong to which car.
+Include an axis label and main title.
+
+3. Create a box plot of iris petal lengths.
+Each species should be a different category.
+Chart needs axis labels and a main title.
+
+```{r, question1}
+mtcars[,c("wt","mpg")]
+mylm <- lm(mtcars$wt ~ mtcars$mpg)
+plot(mtcars$wt,mtcars$mpg, 
+     xlab="weight",
+     ylab="mpg",
+     main="Mtcars weight and mpg",
+     pch=19)
+```
+
+```{r, question2}
+mycars <- mtcars[order(mtcars$wt),]
+par(mar=c(5,12,5,3))
+barplot(mycars$wt, xlim= c(0,6), horiz=TRUE,las=1,names.arg=rownames(mycars),cex.names=0.6,main="mtcars weights",xlab="car weight (lb/1000)")
+grid()
+
+```
+
+
+```{r, question3}
+setosa <- subset(iris,Species=="setosa")
+head(setosa)
+
+virginica <- subset(iris,Species=="virginica")
+head(virginica)
+
+versicolor <- subset(iris,Species=="versicolor")
+head(versicolor)
+
+boxplot(list(setosa$Petal.Length,virginica$Petal.Length,versicolor$Petal.Length),names=c("Setosa","Virginica","Versicolor"),ylab="cm",main="Petal length")
+
+```
+
+
+## Checking my skills
+
+For the TSV file located here: https://raw.githubusercontent.com/markziemann/SLE712_files/master/bioinfo_asst3_part1_files/mydata.tsv do the following:
+
+1. Read it in and show the first 6 rows of data. 
+
+2. Calculate the column and row means.
+
+3. Use the `cor()` command to find the correlation coefficients between the 3 data sets. Which two datasets are the most similar?
+
+4. Make a pairs plot of the three datasets.
+
+## Answers to TSV file
+
+```{r, tsv1}
+URL="https://raw.githubusercontent.com/markziemann/SLE712_files/master/bioinfo_asst3_part1_files/mydata.tsv"
+x <- read.table(URL,header=TRUE,row.names = 1)
+head(x)
+```
+
+```{r,tsv2}
+colMeans(x)
+rowMeans(x)
+```
+
+```{r,tsv3}
+cor(x)
+
+library("gplots")
+heatmap.2(cor(x),trace="none",scale="none",margins = c(15,15))
+```
+
+```{r,tsv4}
+pairs(x)
+```
+
+
+```{r,sessioninfo}
+
+sessionInfo()
+
+```
