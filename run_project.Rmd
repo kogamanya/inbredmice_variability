@@ -1,0 +1,72 @@
+---
+title: "Working on project studies"
+author: Kingsley/Mark
+package: HandyCNV/VCF
+date: May 04, 2021
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 1
+
+
+---
+```{r, chunk 1}
+#reading in the first two VCF file with VCFR
+vcf_x <- vcfR::read.vcfR("VCF_SRP199233/SRX5884275_svtyper.vcf", verbose = FALSE)
+vcf_x
+str(vcf_x)
+strwrap(vcf_x@meta[1:7])
+strwrap(vcf_x@gt[1:6, 1:2])
+head(vcf_x@fix)
+
+
+
+
+
+vcf_y <- vcfR::read.vcfR("VCF_SRP199233/SRX5884276_svtyper.vcf", verbose = FALSE)
+vcf_y
+str(vcf_y)
+strwrap(vcf_y@meta[1:7])
+strwrap(vcf_y@gt[1:6, 1:2])
+head(vcf_y@fix)
+```
+
+```{r, chunk 2}
+#downloading the gff files and installing a package to unzip the gff file.
+
+download.file("ftp://ftp.ensembl.org/pub/release-98/gff3/mus_musculus/Mus_musculus.GRCm38.98.gff3.gz",destfile = "Mus_musculus.GRCm38.98.gff3.gz")
+
+library("R.utils")
+
+gunzip("Mus_musculus.GRCm38.98.gff3.gz")
+
+```
+
+```{r, chunk 3}
+# reading in the FASTA and GFF files
+dna <- ape::read.dna("Mus_musculus.GRCm38.dna_sm.toplevel.fa", format = "fasta",skip = 0, nlines = 0, comment.char = "#", as.character = FALSE, as.matrix = NULL)
+
+
+gff <- read.table("Mus_musculus.GRCm38.98.gff3", sep = "\t", quote = "")
+```
+
+```{r, chunk 4}
+chrom_x <- create.chromR(name='Supercontig', vcf=vcf_x, seq=dna, ann=gff)
+plot(chrom_x)
+
+
+
+
+```
+
+```{r, chunk 5}
+chrom_y <- create.chromR(name='Supercontig', vcf=vcf_y, seq=dna, ann=gff)
+plot(chrom_y)
+```
+```{r, chunk 6}
+
+```
+
+
+
+
