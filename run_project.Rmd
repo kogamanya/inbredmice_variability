@@ -1,72 +1,145 @@
 ---
 title: "Working on project studies"
-author: Kingsley/Mark
-package: HandyCNV/VCF
-date: May 04, 2021
-output: 
-  rmarkdown::html_vignette:
-    toc: true
-    toc_depth: 1
-
-
+author: "Kingsley/Mark"
+date: "July 17, 2021"
+output:
+  html_document: default
+  rmarkdown::html_vignette: default
+package: VariantAnnotation
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Using the VCFR package in accordance with the package workflow
+
+## Processing the first two vcf file of SRP199233
+
 ```{r, chunk 1}
-#reading in the first two VCF file with VCFR
-vcf_x <- vcfR::read.vcfR("VCF_SRP199233/SRX5884275_svtyper.vcf", verbose = FALSE)
-vcf_x
-str(vcf_x)
-strwrap(vcf_x@meta[1:7])
-strwrap(vcf_x@gt[1:6, 1:2])
-head(vcf_x@fix)
+#reading in the first two VCF file with VariantAnnotation
+library(VariantAnnotation)
+vcf_x <- readVcf("VCF_SRP199233/SRX5884275_svtyper.vcf", "mm10")
 
 
-
-
-
-vcf_y <- vcfR::read.vcfR("VCF_SRP199233/SRX5884276_svtyper.vcf", verbose = FALSE)
-vcf_y
-str(vcf_y)
-strwrap(vcf_y@meta[1:7])
-strwrap(vcf_y@gt[1:6, 1:2])
-head(vcf_y@fix)
+vcf_y <- readVcf("VCF_SRP199233/SRX5884276_svtyper.vcf", "mm10")
 ```
 
 ```{r, chunk 2}
 #downloading the gff files and installing a package to unzip the gff file.
 
-download.file("ftp://ftp.ensembl.org/pub/release-98/gff3/mus_musculus/Mus_musculus.GRCm38.98.gff3.gz",destfile = "Mus_musculus.GRCm38.98.gff3.gz")
+#download.file("ftp://ftp.ensembl.org/pub/release-98/gff3/mus_musculus/Mus_musculus.GRCm38.98.gff3.gz",destfile = "Mus_musculus.GRCm38.98.gff3.gz")
 
-library("R.utils")
+#library("R.utils")
 
-gunzip("Mus_musculus.GRCm38.98.gff3.gz")
+#gunzip("Mus_musculus.GRCm38.98.gff3.gz")
 
 ```
 
 ```{r, chunk 3}
-# reading in the FASTA and GFF files
-dna <- ape::read.dna("Mus_musculus.GRCm38.dna_sm.toplevel.fa", format = "fasta",skip = 0, nlines = 0, comment.char = "#", as.character = FALSE, as.matrix = NULL)
-
-
+# reading in the GFF files
 gff <- read.table("Mus_musculus.GRCm38.98.gff3", sep = "\t", quote = "")
 ```
 
 ```{r, chunk 4}
-chrom_x <- create.chromR(name='Supercontig', vcf=vcf_x, seq=dna, ann=gff)
-plot(chrom_x)
+#having a quick look into the both vcf data using the Header functions
+header(vcf_x)
+samples(header(vcf_x))
+geno(header(vcf_x))
 
-
-
-
+header(vcf_y)
+samples(header(vcf_y))
+geno(header(vcf_y))
 ```
 
 ```{r, chunk 5}
-chrom_y <- create.chromR(name='Supercontig', vcf=vcf_y, seq=dna, ann=gff)
-plot(chrom_y)
+#determining the genomic positions of of the data using the rowRanges function which contains information from the CHROM, POS and ID fields of the Vcf files.
+rowRanges(vcf_x)
+head(rowRanges(vcf_x, 3))
+
+head(rowRanges(vcf_y, 3))
 ```
+
 ```{r, chunk 6}
+#looking into the individuals fields of both vcf file for the first length 9
+ref(vcf_x)[1:9]
+qual(vcf_x)[1:9]
+alt(vcf_x)[1:9]
 
+ref(vcf_y)[1:9]
+qual(vcf_y)[1:9]
+alt(vcf_y)[1:9]
 ```
 
+```{r, chunk 7}
+#getting the full list of genotype in both vcf files and describing them in `FORMAT` fields as dataframe and class
+geno(vcf_x)
+sapply(geno(vcf_x), DataFrame)
+sapply(geno(vcf_x), class)
+
+
+geno(vcf_y)
+sapply(geno(vcf_y), DataFrame)
+sapply(geno(vcf_y), class)
+
+#I observed lots of differences with the genotype of both vcf when described in dataframe formats
+```
+
+```{r, chunk 8}
+#having a look at the genotype (GT) by analysing the data as a factor 
+geno(header(vcf_x))["GT",]
+GT_x <- geno(vcf_x)$GT
+GT_x <- as.factor(GT_x)
+head(GT_x)
+str(GT_x)
+table(GT_x)
+
+
+geno(header(vcf_y))["GT",]
+GT_y <- geno(vcf_y)$GT
+GT_y <- as.factor(GT_y)
+head(GT_y)
+str(GT_y)
+table(GT_y)
+```
+
+```{r, chunk 9}
+#comparing the two animals genotype as a single data frame 
+GT <- data.frame(GT_x, GT_y)
+head(GT)
+GT[,c("GT_x","GT_y")]
+str(GT)
+
+#filtering the missing data found within the variants
+subset(GT, GT_x != "./." & GT_y != "./.")
+GT_f <- subset(GT, GT_x != "./." & GT_y != "./.")
+GT_f
+
+#using table and barplot to check the level of heterozygous and homozygous found within the two animals
+table(paste(GT_f$GT_x,GT_f$GT_y))
+barplot(table(GT_f$GT_x == GT_f$GT_y))
+```
+
+
+```{r, chunk 10}
+#creating a function that compares two animals together.
+compare_animals <- function(x,y) {
+  filtered_genotype <- geno(x,y)$GT
+  GT <- data.frame(x,y)
+  subset(GT, x != "./." & y != "./.")
+  return(filtered_genotype)
+}
+
+#function created and to be tried on two different animals read with VariantAnnotation package.
+vcf_a <- readVcf("VCF_SRP199233/SRX5884277_svtyper.vcf", "mm10")
+
+
+vcf_b <- readVcf("VCF_SRP199233/SRX5884278_svtyper.vcf", "mm10")
+
+#attempting the new function.
+compare_animals(vcf_a,vcf_b)
+
+```
 
 
 
