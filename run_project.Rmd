@@ -5,22 +5,29 @@ date: "July 17, 2021"
 output:
   html_document: default
   rmarkdown::html_vignette: default
+  pdf_document: default
 package: VariantAnnotation
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library("GenomicRanges")
+library("R.utils")
+library("Biostrings")
+library("eulerr")
+library("SummarizedExperiment")
+library("VariantAnnotation")
 ```
 
-# Using the VCFR package in accordance with the package workflow
+# Using the VariantAnnotation package in accordance with the package workflow
 
 ## Processing the first two vcf file of SRP199233
 
 ```{r, chunk 1}
 #reading in the first two VCF file with VariantAnnotation
-library(VariantAnnotation)
-vcf_x <- readVcf("VCF_SRP199233/SRX5884275_svtyper.vcf", "mm10")
 
+vcf_x <- readVcf("VCF_SRP199233/SRX5884275_svtyper.vcf", "mm10")
 
 vcf_y <- readVcf("VCF_SRP199233/SRX5884276_svtyper.vcf", "mm10")
 ```
@@ -43,17 +50,28 @@ gff <- read.table("Mus_musculus.GRCm38.98.gff3", sep = "\t", quote = "")
 
 ```{r, chunk 4}
 #having a quick look into the both vcf data using the Header functions
-header(vcf_x)
-samples(header(vcf_x))
-geno(header(vcf_x))
+#header(vcf_x)
+#samples(header(vcf_x))
+#geno(header(vcf_x))
 
-header(vcf_y)
-samples(header(vcf_y))
-geno(header(vcf_y))
+#header(vcf_y)
+#samples(header(vcf_y))
+#geno(header(vcf_y))
 ```
 
 ```{r, chunk 5}
-#determining the genomic positions of of the data using the rowRanges function which contains information from the CHROM, POS and ID fields of the Vcf files.
+
+# this is a better way to look at the contents of the VCF files
+rowRanges(vcf_x)
+info(vcf_x)
+info(VariantAnnotation::header(vcf_x))
+geno(vcf_x)
+geno(VariantAnnotation::header(vcf_x))
+header(vcf_x)
+samples(VariantAnnotation::header(vcf_x))
+
+
+#determining the genomic positions of the data using the rowRanges function which contains information from the CHROM, POS and ID fields of the Vcf files.
 rowRanges(vcf_x)
 head(rowRanges(vcf_x, 3))
 
@@ -71,7 +89,7 @@ qual(vcf_y)[1:9]
 alt(vcf_y)[1:9]
 ```
 
-```{r, chunk 7}
+```{r, chunk 7, results='hide'}
 #getting the full list of genotype in both vcf files and describing them in `FORMAT` fields as dataframe and class
 geno(vcf_x)
 sapply(geno(vcf_x), DataFrame)
@@ -85,9 +103,9 @@ sapply(geno(vcf_y), class)
 #I observed lots of differences with the genotype of both vcf when described in dataframe formats
 ```
 
-```{r, chunk 8}
+```{r, chunk 8, results='hide'}
 #having a look at the genotype (GT) by analysing the data as a factor 
-geno(header(vcf_x))["GT",]
+geno(VariantAnnotation::header(vcf_x))["GT",]
 GT_x <- geno(vcf_x)$GT
 GT_x <- as.factor(GT_x)
 head(GT_x)
@@ -95,7 +113,7 @@ str(GT_x)
 table(GT_x)
 
 
-geno(header(vcf_y))["GT",]
+geno(VariantAnnotation::header(vcf_y))["GT",]
 GT_y <- geno(vcf_y)$GT
 GT_y <- as.factor(GT_y)
 head(GT_y)
@@ -103,7 +121,7 @@ str(GT_y)
 table(GT_y)
 ```
 
-```{r, chunk 9}
+```{r, chunk 9, results='hide'}
 #comparing the two animals genotype as a single data frame 
 GT <- data.frame(GT_x, GT_y)
 head(GT)
@@ -123,22 +141,96 @@ barplot(table(GT_f$GT_x == GT_f$GT_y))
 
 ```{r, chunk 10}
 #creating a function that compares two animals together.
-compare_animals <- function(x,y) {
-  filtered_genotype <- geno(x,y)$GT
-  GT <- data.frame(x,y)
-  subset(GT, x != "./." & y != "./.")
-  return(filtered_genotype)
+compare_vcf <- function(vcf_a,vcf_b) {
+    gta <- geno(vcf_a)$GT
+    gtb <- geno(vcf_b)$GT
+    df <- data.frame(rowRanges(vcf_a),info(vcf_a))
+    df <- df[,c("seqnames","start","END","SVTYPE","SVLEN","QUAL")]
+    gt <- data.frame(gta,gtb)
+    colnames(gt) <- c("a","b")
+    gt <- data.frame(df,gt)
+    nr <- nrow(gt)
+    gt <- subset(gt, a != "./." & b != "./.")
+    gtnr <- nrow(gt)
+    missing <- nr - gtnr
+    gtsame <- length(which(gt$a == gt$b))
+    gtdiff <- length(which(gt$a != gt$b))
+    barplot(table(gt$a),main="a")
+    barplot(table(gt$b),main="b")
+    gt2 <- subset(gt, a != "0/1" & b != "0/1")
+    aset <- which(gt2$a == "1/1")
+    bset <- which(gt2$b == "1/1")
+    v1 <- list("a" = aset , "b" = bset)
+    print(plot(euler(v1),quantities = TRUE,main="homozygous variants"))
+    output=list("gt"=gt, "missing"=missing, "gtsame"=gtsame,"gtdiff"=gtdiff)
+    return(output)
 }
 
 #function created and to be tried on two different animals read with VariantAnnotation package.
 vcf_a <- readVcf("VCF_SRP199233/SRX5884277_svtyper.vcf", "mm10")
 
-
 vcf_b <- readVcf("VCF_SRP199233/SRX5884278_svtyper.vcf", "mm10")
 
 #attempting the new function.
-compare_animals(vcf_a,vcf_b)
+res <- compare_vcf(vcf_a,vcf_b)
 
+#str(res)
+#head(res)
+```
+
+```{r, locate variants}
+#using any of this package to locate variants in and around genes
+library(TxDb.Mmusculus.UCSC.mm10.ensGene)
+
+
+```
+
+Analyzing all 6 Animals together 
+```{r,chunk 11}
+#reading in the last 2 vcf data.
+vcf_d <- readVcf("VCF_SRP199233/SRX5884279_svtyper.vcf", "mm10")
+
+vcf_e <- readVcf("VCF_SRP199233/SRX5884280_svtyper.vcf", "mm10")
+
+#analyzing the geno for the 6 animals respectively.
+
+gtx <- geno(vcf_x)$GT
+gty <- geno(vcf_y)$GT
+gta <- geno(vcf_a)$GT
+gtb <- geno(vcf_b)$GT
+gtd <- geno(vcf_d)$GT
+gte <- geno(vcf_e)$GT
+
+df <- data.frame(rowRanges(vcf_x),info(vcf_x))  #taking a look into the content for one of the vcf file.
+df <- df[,c("seqnames","start","END","SVTYPE","SVLEN","QUAL")]
+gt <- data.frame(gtx,gty,gta,gtb,gtd,gte)
+gt <- data.frame(df,gt)
+colnames(gt) <- c("x","y","a","b","d","e")
+gt <- data.frame(df,gt)
+gt <- subset(gt != "./." & gt != "0/1")
+#gt
+table(gt) #having a tabular look of the TRUE Homozygous variants for all 6 animals.
+
+a_set <- which(gta == "1/1")
+b_set <- which(gtb == "1/1")
+x_set <- which(gtx == "1/1")
+y_set <- which(gty == "1/1")
+d_set <- which(gtd == "1/1")
+e_set <- which(gte == "1/1")
+
+v1 <- list("a" = a_set, "b" = b_set, "x" = x_set, "y" = y_set, "d" = d_set, "e" = e_set)
+print(plot(euler(v1),quantities = TRUE,main="homozygous variants"))
+
+
+
+
+
+
+```
+
+
+```{r, session}
+sessionInfo()
 ```
 
 
