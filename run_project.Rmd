@@ -202,8 +202,11 @@ gtd <- geno(vcf_d)$GT
 gte <- geno(vcf_e)$GT
 
 df <- data.frame(rowRanges(vcf_x),info(vcf_x))  #taking a look into the content for one of the vcf file.
+head(df)
 df <- df[,c("seqnames","start","END","SVTYPE","SVLEN","QUAL")]
 gt <- data.frame(gtx,gty,gta,gtb,gtd,gte)
+head(gt)
+gt2 <- gt
 gt <- data.frame(df,gt)
 colnames(gt) <- c("x","y","a","b","d","e")
 gt <- data.frame(df,gt)
@@ -228,6 +231,23 @@ print(plot(euler(v1),quantities = TRUE,main="homozygous variants"))
 
 ```
 
+```{r, heatmap1, fig.width=8, fig.height=8}
+gt2 <- apply(gt2, 2, function(x){
+  as.numeric(as.factor(x))-2
+}) 
+#gt2
+gt2[gt2 == -1] <- NA
+
+library(gplots)
+
+rownames(gt2) <- paste(df$seqnames,df$start,sep=":")
+rownames(gt2)
+colfunc <- colorRampPalette(c("yellow", "blue", "red"))
+heatmap.2(head(gt2, 100), trace = "none", scale = "none", dendrogram='none', Rowv=FALSE, Colv=FALSE, col=colfunc(25), margins = c(5,10), cexRow=.8, cexCol=.9,  main="Genetic Variation")
+
+
+
+```
 
 ```{r, session}
 sessionInfo()
