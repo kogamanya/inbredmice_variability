@@ -232,16 +232,21 @@ heatmap.2(gt3, trace = "none", scale = "none", dendrogram='none', Rowv=FALSE, Co
 #using the package below to locate and annotate the gene variants without necessary needing the gff file at the moment
 library(TxDb.Mmusculus.UCSC.mm10.ensGene)
 txdb <- TxDb.Mmusculus.UCSC.mm10.ensGene
-#seqlevels(vcf_d) <- "chr19"
-#rd <- rowRanges(vcf_d)
-#head(rd)
-#txdb
-#head(seqlevels(txdb))
+
+vcfd <- vcf_d #copied vcf_d file to vcfd, so as to use vcfd to have a clear look into how to annotate and locate the gene variants without altering the vcf_d files.
+
+rd <- rowRanges(vcfd)
+head(rd)
+txdb
+seqlevels(vcfd)
+seqlevels(txdb) #need to fix the seqlevels of txdb back to normal as it should be.
+
+
+#head(gff)
 
 
 #loc <- locateVariants(rd, txdb, CodingVariants())
 
-#yet to figure out the right way to locate the gene variants, but continue to annotate using the gff file.
 
 #all <- locateVariants(gt, txdb, AllVariants())
 
