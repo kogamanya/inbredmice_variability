@@ -49,17 +49,6 @@ gff <- read.table("Mus_musculus.GRCm38.98.gff3", sep = "\t", quote = "")
 ```
 
 ```{r, chunk 4}
-#having a quick look into the both vcf data using the Header functions
-#header(vcf_x)
-#samples(header(vcf_x))
-#geno(header(vcf_x))
-
-#header(vcf_y)
-#samples(header(vcf_y))
-#geno(header(vcf_y))
-```
-
-```{r, chunk 5}
 
 # this is a better way to look at the contents of the VCF files
 rowRanges(vcf_x)
@@ -78,7 +67,7 @@ head(rowRanges(vcf_x, 3))
 head(rowRanges(vcf_y, 3))
 ```
 
-```{r, chunk 6}
+```{r, chunk 5}
 #looking into the individuals fields of both vcf file for the first length 9
 ref(vcf_x)[1:9]
 qual(vcf_x)[1:9]
@@ -89,7 +78,7 @@ qual(vcf_y)[1:9]
 alt(vcf_y)[1:9]
 ```
 
-```{r, chunk 7, results='hide'}
+```{r, chunk 6, results='hide'}
 #getting the full list of genotype in both vcf files and describing them in `FORMAT` fields as dataframe and class
 geno(vcf_x)
 sapply(geno(vcf_x), DataFrame)
@@ -103,7 +92,7 @@ sapply(geno(vcf_y), class)
 #I observed lots of differences with the genotype of both vcf when described in dataframe formats
 ```
 
-```{r, chunk 8, results='hide'}
+```{r, chunk 7, results='hide'}
 #having a look at the genotype (GT) by analysing the data as a factor 
 geno(VariantAnnotation::header(vcf_x))["GT",]
 GT_x <- geno(vcf_x)$GT
@@ -121,7 +110,7 @@ str(GT_y)
 table(GT_y)
 ```
 
-```{r, chunk 9, results='hide'}
+```{r, chunk 8, results='hide'}
 #comparing the two animals genotype as a single data frame 
 GT <- data.frame(GT_x, GT_y)
 head(GT)
@@ -139,7 +128,7 @@ barplot(table(GT_f$GT_x == GT_f$GT_y))
 ```
 
 
-```{r, chunk 10}
+```{r, chunk 9}
 #creating a function that compares two animals together.
 compare_vcf <- function(vcf_a,vcf_b) {
     gta <- geno(vcf_a)$GT
@@ -178,15 +167,8 @@ res <- compare_vcf(vcf_a,vcf_b)
 #head(res)
 ```
 
-```{r, locate variants}
-#using any of this package to locate variants in and around genes
-library(TxDb.Mmusculus.UCSC.mm10.ensGene)
-
-
-```
-
 Analyzing all 6 Animals together 
-```{r,chunk 11}
+```{r,chunk 10}
 #reading in the last 2 vcf data.
 vcf_d <- readVcf("VCF_SRP199233/SRX5884279_svtyper.vcf", "mm10")
 
@@ -205,13 +187,12 @@ df <- data.frame(rowRanges(vcf_x),info(vcf_x))  #taking a look into the content 
 head(df)
 df <- df[,c("seqnames","start","END","SVTYPE","SVLEN","QUAL")]
 gt <- data.frame(gtx,gty,gta,gtb,gtd,gte)
-head(gt)
+gt <- data.frame(df,gt) # this gives us the quality check of each variants for the 6 animals and from here i will need to copy objects gt into gt2 and then subset gt2 for the variants with highest confidence using the QUAL which should be > 30.
 gt2 <- gt
-gt <- data.frame(df,gt)
-colnames(gt) <- c("x","y","a","b","d","e")
-gt <- data.frame(df,gt)
+
+colnames(gt) <- c("x","y","a","b","d","e") #continue working on gt objects to get the true Homozygous variants for all animals and visualize it on a venn diagram
 gt <- subset(gt != "./." & gt != "0/1")
-#gt
+head(gt)
 table(gt) #having a tabular look of the TRUE Homozygous variants for all 6 animals.
 
 a_set <- which(gta == "1/1")
@@ -225,29 +206,50 @@ v1 <- list("a" = a_set, "b" = b_set, "x" = x_set, "y" = y_set, "d" = d_set, "e" 
 print(plot(euler(v1),quantities = TRUE,main="homozygous variants"))
 
 
-
-
-
-
 ```
 
 ```{r, heatmap1, fig.width=8, fig.height=8}
-gt2 <- apply(gt2, 2, function(x){
+gt2 <- subset(gt2, gt2$QUAL>30)
+
+gt3 <- apply(gt2[,c(7:12)], 2, function(x){
   as.numeric(as.factor(x))-2
-}) 
-#gt2
+})
+cbind(gt2,gt3)
+
 gt2[gt2 == -1] <- NA
 
 library(gplots)
 
-rownames(gt2) <- paste(df$seqnames,df$start,sep=":")
-rownames(gt2)
+rownames(gt3) <- paste(gt2$seqnames,gt2$start,sep=":")
+rownames(gt3)
 colfunc <- colorRampPalette(c("yellow", "blue", "red"))
-heatmap.2(head(gt2, 100), trace = "none", scale = "none", dendrogram='none', Rowv=FALSE, Colv=FALSE, col=colfunc(25), margins = c(5,10), cexRow=.8, cexCol=.9,  main="Genetic Variation")
+heatmap.2(gt3, trace = "none", scale = "none", dendrogram='none', Rowv=FALSE, Colv=FALSE, col=colfunc(25), margins = c(5,10), cexRow=.8, cexCol=.9,  main="Genetic Variation")
+
+#from my little investigation, i could tell that variants with high confidence can only be identify through there quality check
+```
+
+```{r, locate variants}
+#using the package below to locate and annotate the gene variants without necessary needing the gff file at the moment
+library(TxDb.Mmusculus.UCSC.mm10.ensGene)
+txdb <- TxDb.Mmusculus.UCSC.mm10.ensGene
+#seqlevels(vcf_d) <- "chr19"
+#rd <- rowRanges(vcf_d)
+#head(rd)
+#txdb
+#head(seqlevels(txdb))
+
+
+#loc <- locateVariants(rd, txdb, CodingVariants())
+
+#yet to figure out the right way to locate the gene variants, but continue to annotate using the gff file.
+
+#all <- locateVariants(gt, txdb, AllVariants())
+
 
 
 
 ```
+
 
 ```{r, session}
 sessionInfo()
