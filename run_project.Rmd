@@ -18,6 +18,7 @@ library("Biostrings")
 library("eulerr")
 library("SummarizedExperiment")
 library("VariantAnnotation")
+
 ```
 
 # Using the VariantAnnotation package in accordance with the package workflow
@@ -241,20 +242,75 @@ txdb
 seqlevels(vcfd)
 seqlevels(txdb) #need to fix the seqlevels of txdb back to normal as it should be.
 
+myseqlevels <- gsub("chrUn_","",seqlevels(txdb))
+myseqlevels <- gsub("_random","",myseqlevels)
+strReverse <- function(x) { sapply(lapply(strsplit(x, NULL), rev), paste, collapse="") }
+myseqlevels <- strReverse(myseqlevels)
+myseqlevels <- sapply(strsplit(myseqlevels , "_"),"[[",1)
+myseqlevels <- strReverse(myseqlevels)
+myseqlevels <- gsub("chr","",myseqlevels)
+myseqlevels <- gsub("M","MT",myseqlevels)
+myseqlevels
 
-#head(gff)
+seqlevels(txdb) <- myseqlevels
 
+intersect(seqlevels(rd),seqlevels(txdb))
 
+# why are the variants in rd only 1bp size?
 #loc <- locateVariants(rd, txdb, CodingVariants())
 
-
-#all <- locateVariants(gt, txdb, AllVariants())
-
-
-
+#all <- locateVariants(rd, txdb, AllVariants())
 
 ```
 
+
+```{r,loadgff}
+
+gff_file <- "Mus_musculus.GRCm38.98.gff3"
+txdb <- makeTxDbFromGFF(gff_file, format="gff3")
+
+```
+
+## transcript intercept
+
+```{r,txint}
+
+tx <- transcripts(txdb)
+ol <- findOverlaps(rd,tx)
+ol
+var_ol <- rd[queryHits(ol)]
+tx_ol <- tx[subjectHits(ol)]
+var_ol
+tx_ol
+vardf <- as.data.frame(var_ol,row.names = 1:nrow(as.data.frame(ranges(var_ol))))
+head(vardf)
+txdf <- as.data.frame(tx_ol,row.names = 1:nrow(as.data.frame(ranges(tx_ol))))
+head(txdf)
+vardf$tx <- txdf$tx_name
+head(vardf)
+vardf_tx <- vardf
+
+```
+
+## gene intercept
+
+```{r,gene int}
+
+gx <- genes(txdb)
+ol <- findOverlaps(rd,gx)
+ol
+var_ol <- rd[queryHits(ol)]
+gx_ol <- gx[subjectHits(ol)]
+var_ol
+gx_ol
+vardf <- as.data.frame(var_ol,row.names = 1:nrow(as.data.frame(ranges(var_ol))))
+head(vardf)
+gxdf <- as.data.frame(gx_ol,row.names = 1:nrow(as.data.frame(ranges(gx_ol))))
+head(gxdf)
+vardf$gene <- gxdf$gene_id
+head(vardf)
+
+```
 
 ```{r, session}
 sessionInfo()
