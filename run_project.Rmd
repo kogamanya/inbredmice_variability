@@ -53,6 +53,7 @@ gff <- read.table("Mus_musculus.GRCm38.98.gff3", sep = "\t", quote = "")
 
 # this is a better way to look at the contents of the VCF files
 rowRanges(vcf_x)
+rd_x <- rowRanges(vcf_x)
 info(vcf_x)
 info(VariantAnnotation::header(vcf_x))
 geno(vcf_x)
@@ -66,6 +67,7 @@ rowRanges(vcf_x)
 head(rowRanges(vcf_x, 3))
 
 head(rowRanges(vcf_y, 3))
+rd_y <- rowRanges(vcf_y)
 ```
 
 ```{r, chunk 5}
@@ -158,8 +160,10 @@ compare_vcf <- function(vcf_a,vcf_b) {
 
 #function created and to be tried on two different animals read with VariantAnnotation package.
 vcf_a <- readVcf("VCF_SRP199233/SRX5884277_svtyper.vcf", "mm10")
+rd_a <- rowRanges(vcf_a)
 
 vcf_b <- readVcf("VCF_SRP199233/SRX5884278_svtyper.vcf", "mm10")
+rd_b <- rowRanges(vcf_b)
 
 #attempting the new function.
 res <- compare_vcf(vcf_a,vcf_b)
@@ -172,8 +176,10 @@ Analyzing all 6 Animals together
 ```{r,chunk 10}
 #reading in the last 2 vcf data.
 vcf_d <- readVcf("VCF_SRP199233/SRX5884279_svtyper.vcf", "mm10")
+rd_d <- rowRanges(vcf_d)
 
 vcf_e <- readVcf("VCF_SRP199233/SRX5884280_svtyper.vcf", "mm10")
+rd_e <- rowRanges(vcf_e)
 
 #analyzing the geno for the 6 animals respectively.
 
@@ -232,29 +238,19 @@ heatmap.2(gt3, trace = "none", scale = "none", dendrogram='none', Rowv=FALSE, Co
 ```{r, locate variants}
 #using the package below to locate and annotate the gene variants without necessary needing the gff file at the moment
 library(TxDb.Mmusculus.UCSC.mm10.ensGene)
-txdb <- TxDb.Mmusculus.UCSC.mm10.ensGene
+#txdb <- TxDb.Mmusculus.UCSC.mm10.ensGene
 
-vcfd <- vcf_d #copied vcf_d file to vcfd, so as to use vcfd to have a clear look into how to annotate and locate the gene variants without altering the vcf_d files.
 
-rd <- rowRanges(vcfd)
-head(rd)
-txdb
-seqlevels(vcfd)
-seqlevels(txdb) #need to fix the seqlevels of txdb back to normal as it should be.
+#myseqlevels <- gsub("chrUn_","",seqlevels(txdb))
+#myseqlevels <- gsub("_random","",myseqlevels)
+#strReverse <- function(x) { sapply(lapply(strsplit(x, NULL), rev), paste, collapse="") }
+#myseqlevels <- strReverse(myseqlevels)
+#myseqlevels <- sapply(strsplit(myseqlevels , "_"),"[[",1)
+#myseqlevels <- strReverse(myseqlevels)
+#myseqlevels <- gsub("chr","",myseqlevels)
+#myseqlevels <- gsub("M","MT",myseqlevels)
+#myseqlevels
 
-myseqlevels <- gsub("chrUn_","",seqlevels(txdb))
-myseqlevels <- gsub("_random","",myseqlevels)
-strReverse <- function(x) { sapply(lapply(strsplit(x, NULL), rev), paste, collapse="") }
-myseqlevels <- strReverse(myseqlevels)
-myseqlevels <- sapply(strsplit(myseqlevels , "_"),"[[",1)
-myseqlevels <- strReverse(myseqlevels)
-myseqlevels <- gsub("chr","",myseqlevels)
-myseqlevels <- gsub("M","MT",myseqlevels)
-myseqlevels
-
-seqlevels(txdb) <- myseqlevels
-
-intersect(seqlevels(rd),seqlevels(txdb))
 
 # why are the variants in rd only 1bp size?
 #loc <- locateVariants(rd, txdb, CodingVariants())
@@ -269,6 +265,20 @@ intersect(seqlevels(rd),seqlevels(txdb))
 gff_file <- "Mus_musculus.GRCm38.98.gff3"
 txdb <- makeTxDbFromGFF(gff_file, format="gff3")
 
+vcfd <- vcf_d #copied vcf_d file to vcfd, so as to use vcfd to have a clear look into how to annotate and locate the gene variants without altering the vcf_d files.
+
+rd <- rowRanges(vcfd)
+
+rd
+rd <- rd[elementMetadata(rd)[,4]>30]
+
+
+txdb
+seqlevels(vcfd)
+seqlevels(txdb)
+
+intersect(seqlevels(rd),seqlevels(txdb))
+
 ```
 
 ## transcript intercept
@@ -282,14 +292,14 @@ var_ol <- rd[queryHits(ol)]
 tx_ol <- tx[subjectHits(ol)]
 var_ol
 tx_ol
-vardf <- as.data.frame(var_ol,row.names = 1:nrow(as.data.frame(ranges(var_ol))))
+vardf <- as.data.frame(var_ol,row.names = 1:nrow(as.data.frame(ranges(var_ol,use.mcols = TRUE)))) #read up more on the tab options to get the ALT.
 head(vardf)
 txdf <- as.data.frame(tx_ol,row.names = 1:nrow(as.data.frame(ranges(tx_ol))))
 head(txdf)
 vardf$tx <- txdf$tx_name
 head(vardf)
 vardf_tx <- vardf
-
+vardf_tx
 ```
 
 ## gene intercept
@@ -308,7 +318,24 @@ head(vardf)
 gxdf <- as.data.frame(gx_ol,row.names = 1:nrow(as.data.frame(ranges(gx_ol))))
 head(gxdf)
 vardf$gene <- gxdf$gene_id
-head(vardf)
+vardf
+
+```
+
+#locating and merging the gene names 
+```{r, gene names}
+
+genenames <- read.table("Mus_musculus.GRCm38.98.gff3.genenames.tsv", header = FALSE, sep = "\t", quote = "")
+colnames(genenames) <- c("Ensembl ID","Gene Name")
+genenames
+
+gene_variants <- merge(genenames, vardf,by.x="Ensembl ID", by.y="gene")
+gene_variants
+
+#subset from the gene variants objects to get the 3 types of variation to show on the circos plot
+
+library("RCircos")
+
 
 ```
 
