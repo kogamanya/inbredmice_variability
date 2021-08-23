@@ -221,14 +221,16 @@ gt2 <- subset(gt2, gt2$QUAL>30)
 gt3 <- apply(gt2[,c(7:12)], 2, function(x){
   as.numeric(as.factor(x))-2
 })
-cbind(gt2,gt3)
+
+gt23 <- cbind(gt2,gt3)
+head(gt23)
 
 gt2[gt2 == -1] <- NA
 
 library(gplots)
 
 rownames(gt3) <- paste(gt2$seqnames,gt2$start,sep=":")
-rownames(gt3)
+head(rownames(gt3))
 colfunc <- colorRampPalette(c("yellow", "blue", "red"))
 heatmap.2(gt3, trace = "none", scale = "none", dendrogram='none', Rowv=FALSE, Colv=FALSE, col=colfunc(25), margins = c(5,10), cexRow=.8, cexCol=.9,  main="Genetic Variation")
 
@@ -299,7 +301,8 @@ head(txdf)
 vardf$tx <- txdf$tx_name
 head(vardf)
 vardf_tx <- vardf
-vardf_tx
+head(vardf_tx)
+
 ```
 
 ## gene intercept
@@ -307,40 +310,56 @@ vardf_tx
 ```{r,gene int}
 
 gx <- genes(txdb)
-ol <- findOverlaps(rd,gx)
+ol <- findOverlaps(rd,gx,select = "all")
 ol
+
 var_ol <- rd[queryHits(ol)]
 gx_ol <- gx[subjectHits(ol)]
 var_ol
-gx_ol
+
 vardf <- as.data.frame(var_ol,row.names = 1:nrow(as.data.frame(ranges(var_ol))))
+vardf$ALT <- as.character(GenomicRanges::elementMetadata(var_ol)$ALT)
 head(vardf)
+
 gxdf <- as.data.frame(gx_ol,row.names = 1:nrow(as.data.frame(ranges(gx_ol))))
 head(gxdf)
 vardf$gene <- gxdf$gene_id
-vardf
+
+head(vardf)
+
+
 
 ```
 
-#locating and merging the gene names 
+## locating and merging the gene names 
+
 ```{r, gene names}
 
 genenames <- read.table("Mus_musculus.GRCm38.98.gff3.genenames.tsv", header = FALSE, sep = "\t", quote = "")
 colnames(genenames) <- c("Ensembl ID","Gene Name")
-genenames
+head(genenames)
 
 gene_variants <- merge(genenames, vardf,by.x="Ensembl ID", by.y="gene")
-gene_variants
-
-#subset from the gene variants objects to get the 3 types of variation to show on the circos plot
-
-library("RCircos")
-
+head(gene_variants)
 
 ```
 
+# Circos plot
+
+Subset from the gene variants objects to get the 3 types of variation to show on the circos plot: ie Deletions, Duplications and Break-ends.
+
+```{r,rcircos}
+
+library("RCircos")
+
+```
+
+## Session Information
+
 ```{r, session}
+
 sessionInfo()
+
 ```
 
 
