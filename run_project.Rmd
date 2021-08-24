@@ -262,7 +262,7 @@ library(TxDb.Mmusculus.UCSC.mm10.ensGene)
 ```
 
 
-```{r,loadgff}
+```{r,loadgff, results='hide'}
 
 gff_file <- "Mus_musculus.GRCm38.98.gff3"
 txdb <- makeTxDbFromGFF(gff_file, format="gff3")
@@ -285,7 +285,7 @@ intersect(seqlevels(rd),seqlevels(txdb))
 
 ## transcript intercept
 
-```{r,txint}
+```{r,txint, results='hide'}
 
 tx <- transcripts(txdb)
 ol <- findOverlaps(rd,tx)
@@ -307,7 +307,7 @@ head(vardf_tx)
 
 ## gene intercept
 
-```{r,gene int}
+```{r,gene int, results='hide'}
 
 gx <- genes(txdb)
 ol <- findOverlaps(rd,gx,select = "all")
@@ -341,12 +341,25 @@ head(genenames)
 
 gene_variants <- merge(genenames, vardf,by.x="Ensembl ID", by.y="gene")
 head(gene_variants)
+gene_variants
+
+del_variants <- subset(gene_variants, ALT=="<DEL>")
+del_variants
+
+dup_variants <- subset(gene_variants, ALT=="<DUP>")
+dup_variants
+
+inv_variants <- subset(gene_variants, ALT=="<INV>")
+inv_variants
+
+breaks_variants <- subset(gene_variants, ALT!="<DUP>" & ALT!="<DEL>" & ALT!="<INV>")
+breaks_variants
 
 ```
 
 # Circos plot
 
-Subset from the gene variants objects to get the 3 types of variation to show on the circos plot: ie Deletions, Duplications and Break-ends.
+Subset from the gene variants objects to get the 3 types of variation to show on the circos plot: ie Deletions, Inversion, Duplications and Break-ends.
 
 ```{r,rcircos}
 
