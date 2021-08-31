@@ -275,11 +275,11 @@ rd
 rd <- rd[elementMetadata(rd)[,4]>30]
 
 
-txdb
-seqlevels(vcfd)
-seqlevels(txdb)
+#txdb
+#seqlevels(vcfd)
+#seqlevels(txdb)
 
-intersect(seqlevels(rd),seqlevels(txdb))
+#intersect(seqlevels(rd),seqlevels(txdb))
 
 ```
 
@@ -294,7 +294,7 @@ var_ol <- rd[queryHits(ol)]
 tx_ol <- tx[subjectHits(ol)]
 var_ol
 tx_ol
-vardf <- as.data.frame(var_ol,row.names = 1:nrow(as.data.frame(ranges(var_ol,use.mcols = TRUE)))) #read up more on the tab options to get the ALT.
+vardf <- as.data.frame(var_ol,row.names = 1:nrow(as.data.frame(ranges(var_ol,use.mcols = TRUE)))) 
 head(vardf)
 txdf <- as.data.frame(tx_ol,row.names = 1:nrow(as.data.frame(ranges(tx_ol))))
 head(txdf)
@@ -327,8 +327,6 @@ vardf$gene <- gxdf$gene_id
 
 head(vardf)
 
-
-
 ```
 
 ## locating and merging the gene names 
@@ -344,28 +342,63 @@ head(gene_variants)
 gene_variants
 
 del_variants <- subset(gene_variants, ALT=="<DEL>")
+del_variants$seqnames <- gsub("^","chr",del_variants$seqnames)
 del_variants
 
 dup_variants <- subset(gene_variants, ALT=="<DUP>")
+dup_variants$seqnames <- gsub("^","chr",dup_variants$seqnames)
 dup_variants
 
 inv_variants <- subset(gene_variants, ALT=="<INV>")
+inv_variants$seqnames <- gsub("^","chr",inv_variants$seqnames)
 inv_variants
 
 breaks_variants <- subset(gene_variants, ALT!="<DUP>" & ALT!="<DEL>" & ALT!="<INV>")
+breaks_variants$seqnames <- gsub("^","chr",breaks_variants$seqnames)
 breaks_variants
 
 ```
 
 # Circos plot
 
-Subset from the gene variants objects to get the 3 types of variation to show on the circos plot: ie Deletions, Inversion, Duplications and Break-ends.
+Subset from the gene variants objects to get the 4 types of variation to show on the circos plot: ie Deletions, Inversion, Duplications and Break-ends.
 
-```{r,rcircos}
+```{r,rcircos,fig.width=8, fig.height=8}
 
 library("RCircos")
 
+#having an attempt with the exact way it is carried out on vignette
+data(UCSC.Mouse.GRCm38.CytoBandIdeogram)  #loading the mouse chromosome ideograms
+head(UCSC.Mouse.GRCm38.CytoBandIdeogram)
+
+
+RCircos.Set.Core.Components(
+	cyto.info=UCSC.Mouse.GRCm38.CytoBandIdeogram,
+	tracks.inside=10, tracks.outside=0)
+#out.file <- "GeneticVariation.pdf"
+#pdf(file=out.file, height=8, width=8, compress=TRUE)
+RCircos.Set.Plot.Area()
+RCircos.Chromosome.Ideogram.Plot()
+
+data(RCircos.Tile.Data);
+
+RCircos.Tile.Plot(tile.data=head(del_variants[,3:5]), 
+	track.num=1, side="in")
+
+RCircos.Tile.Plot(tile.data=dup_variants[,3:5], 
+	track.num=2, side="in")
+
+RCircos.Tile.Plot(tile.data=inv_variants[,3:5], 
+	track.num=3, side="in")
+
+RCircos.Tile.Plot(tile.data=breaks_variants[,3:5], 
+	track.num=4, side="in")
+
+#str(RCircos.Tile.Data)
+#head(RCircos.Tile.Data)
+
 ```
+
 
 ## Session Information
 
