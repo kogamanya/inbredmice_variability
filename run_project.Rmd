@@ -374,9 +374,24 @@ head(UCSC.Mouse.GRCm38.CytoBandIdeogram)
 
 RCircos.Set.Core.Components(
 	cyto.info=UCSC.Mouse.GRCm38.CytoBandIdeogram,
-	tracks.inside=10, tracks.outside=0)
+	tracks.inside=5, tracks.outside=0)
 #out.file <- "GeneticVariation.pdf"
 #pdf(file=out.file, height=8, width=8, compress=TRUE)
+
+ideo <- RCircos.Get.Plot.Ideogram() #making attempts on making the features or components of the circos biggger.
+rows <- which(ideo$BandColor =="red")
+ideo$BandColor[rows] <- "green"
+RCircos.Reset.Plot.Ideogram(ideo)
+
+params <- RCircos.Get.Plot.Parameters()
+params$base.per.unit <- 6000
+RCircos.Reset.Plot.Parameters(params)
+
+
+positions <- RCircos.Get.Plot.Positions();
+positions[1, 3] <- 0;
+RCircos.Reset.Plot.Positions(positions);
+
 RCircos.Set.Plot.Area()
 RCircos.Chromosome.Ideogram.Plot()
 
