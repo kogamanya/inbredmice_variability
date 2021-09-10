@@ -355,7 +355,16 @@ inv_variants
 
 breaks_variants <- subset(gene_variants, ALT!="<DUP>" & ALT!="<DEL>" & ALT!="<INV>")
 breaks_variants$seqnames <- gsub("^","chr",breaks_variants$seqnames)
+breaks_variants <- breaks_variants[order(-breaks_variants$QUAL),]
 breaks_variants
+
+links <- gsub("N","",breaks_variants$ALT)
+links <- gsub("\\[","",links)
+links <- gsub("\\]","",links)
+links_seqname <- sapply(strsplit(links,":"),"[[",1)
+links_seqname <- gsub("^","chr",links_seqname)
+links_start <- sapply(strsplit(links,":"),"[[",2)
+breaks_variants_circos <- data.frame(breaks_variants[,3:5],links_seqname,links_start,links_start)
 
 ```
 
