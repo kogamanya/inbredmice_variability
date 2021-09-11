@@ -49,7 +49,7 @@ vcf_y <- readVcf("VCF_SRP199233/SRX5884276_svtyper.vcf", "mm10")
 gff <- read.table("Mus_musculus.GRCm38.98.gff3", sep = "\t", quote = "")
 ```
 
-```{r, chunk 4}
+```{r, chunk 4, results='hide'}
 
 # this is a better way to look at the contents of the VCF files
 rowRanges(vcf_x)
@@ -58,7 +58,7 @@ info(vcf_x)
 info(VariantAnnotation::header(vcf_x))
 geno(vcf_x)
 geno(VariantAnnotation::header(vcf_x))
-header(vcf_x)
+#header(vcf_x) 
 samples(VariantAnnotation::header(vcf_x))
 
 
@@ -196,7 +196,7 @@ df <- df[,c("seqnames","start","END","SVTYPE","SVLEN","QUAL")]
 gt <- data.frame(gtx,gty,gta,gtb,gtd,gte)
 gt <- data.frame(df,gt) # this gives us the quality check of each variants for the 6 animals and from here i will need to copy objects gt into gt2 and then subset gt2 for the variants with highest confidence using the QUAL which should be > 30.
 gt2 <- gt
-
+head(gt2)
 colnames(gt) <- c("x","y","a","b","d","e") #continue working on gt objects to get the true Homozygous variants for all animals and visualize it on a venn diagram
 gt <- subset(gt != "./." & gt != "0/1")
 head(gt)
@@ -242,23 +242,6 @@ heatmap.2(gt3, trace = "none", scale = "none", dendrogram='none', Rowv=FALSE, Co
 library(TxDb.Mmusculus.UCSC.mm10.ensGene)
 #txdb <- TxDb.Mmusculus.UCSC.mm10.ensGene
 
-
-#myseqlevels <- gsub("chrUn_","",seqlevels(txdb))
-#myseqlevels <- gsub("_random","",myseqlevels)
-#strReverse <- function(x) { sapply(lapply(strsplit(x, NULL), rev), paste, collapse="") }
-#myseqlevels <- strReverse(myseqlevels)
-#myseqlevels <- sapply(strsplit(myseqlevels , "_"),"[[",1)
-#myseqlevels <- strReverse(myseqlevels)
-#myseqlevels <- gsub("chr","",myseqlevels)
-#myseqlevels <- gsub("M","MT",myseqlevels)
-#myseqlevels
-
-
-# why are the variants in rd only 1bp size?
-#loc <- locateVariants(rd, txdb, CodingVariants())
-
-#all <- locateVariants(rd, txdb, AllVariants())
-
 ```
 
 
@@ -272,7 +255,7 @@ vcfd <- vcf_d #copied vcf_d file to vcfd, so as to use vcfd to have a clear look
 rd <- rowRanges(vcfd)
 
 rd
-rd <- rd[elementMetadata(rd)[,4]>30]
+rd <- rd[elementMetadata(rd)[,4]>100]
 
 
 #txdb
@@ -340,10 +323,16 @@ head(genenames)
 gene_variants <- merge(genenames, vardf,by.x="Ensembl ID", by.y="gene")
 head(gene_variants)
 gene_variants
+#gene_variants2 <- gene_variants
 
 del_variants <- subset(gene_variants, ALT=="<DEL>")
 del_variants$seqnames <- gsub("^","chr",del_variants$seqnames)
-del_variants
+
+#del_variants2 <- del_variants
+#del_variants2 <- as.factor(del_variants2)
+#table(del_variants2)
+#geno(VariantAnnotation::header(del_variants2))["GT",]
+#GT_del <- geno(del_variants2)$GT
 
 dup_variants <- subset(gene_variants, ALT=="<DUP>")
 dup_variants$seqnames <- gsub("^","chr",dup_variants$seqnames)
@@ -355,8 +344,9 @@ inv_variants
 
 breaks_variants <- subset(gene_variants, ALT!="<DUP>" & ALT!="<DEL>" & ALT!="<INV>")
 breaks_variants$seqnames <- gsub("^","chr",breaks_variants$seqnames)
-breaks_variants
-
+breaks_variants 
+strsplit(breaks_variants,split = "<ALT>")
+gsub(breaks_variants)
 ```
 
 # Circos plot
@@ -409,10 +399,58 @@ RCircos.Tile.Plot(tile.data=inv_variants[,3:5],
 RCircos.Tile.Plot(tile.data=breaks_variants[,3:5], 
 	track.num=4, side="in")
 
-#str(RCircos.Tile.Data)
-#head(RCircos.Tile.Data)
+data(RCircos.Link.Data)
+#track.num <- 5
+#RCircos.Link.Plot(RCircos.Link.Data, track.num = 5)
+
+#data(RCircos.Ribbon.Data)
+#RCircos.Ribbon.Plot(RCircos.Ribbon.Data,track.num = 5, by.chromosome = FALSE, twist = FALSE)
 
 ```
+
+```{r, loadLibraries,  results='hide'}
+#loading the required libraries needed for the genome browser
+library(igvR)
+library(MotifDb)
+library(BSgenome)
+library(AnnotationHub)
+library(GenomicAlignments)
+```
+
+```{r, createLoad}
+#creating igvR instance and initializing a websocket between R 
+#and the web page over which commands and data will travel to
+igv <- igvR()
+setBrowserWindowTitle(igv, "MEF2C")
+setGenome(igv, "mm10")
+
+```
+
+```{r, showMEF2C}
+showGenomicRegion(igv, "MEF2C")
+```
+
+```{r roi,  results='hide'}
+#expandimg the region on display and creating a Granges object for other genomic queries
+loc <- getGenomicRegion(igv)
+margin <- 25000
+bigger.loc <- with(loc, sprintf("%s:%d-%d", chrom, start-margin, end+margin))
+mef2c.region <- with(loc, GRanges(seqnames=chrom, IRanges(start=start+margin, end=end+margin)))
+showGenomicRegion(igv, bigger.loc)
+```
+
+```{r data.frame.track,  results='hide'}
+load(system.file(package="igvR", "extdata", "bam files"))
+
+```
+
+
+
+
+
+
+
+
 
 
 ## Session Information
