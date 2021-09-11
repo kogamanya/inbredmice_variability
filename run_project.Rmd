@@ -255,7 +255,7 @@ vcfd <- vcf_d #copied vcf_d file to vcfd, so as to use vcfd to have a clear look
 rd <- rowRanges(vcfd)
 
 rd
-rd <- rd[elementMetadata(rd)[,4]>100]
+rd <- rd[elementMetadata(rd)[,4]>200]
 
 
 #txdb
@@ -323,16 +323,10 @@ head(genenames)
 gene_variants <- merge(genenames, vardf,by.x="Ensembl ID", by.y="gene")
 head(gene_variants)
 gene_variants
-#gene_variants2 <- gene_variants
 
 del_variants <- subset(gene_variants, ALT=="<DEL>")
 del_variants$seqnames <- gsub("^","chr",del_variants$seqnames)
-
-#del_variants2 <- del_variants
-#del_variants2 <- as.factor(del_variants2)
-#table(del_variants2)
-#geno(VariantAnnotation::header(del_variants2))["GT",]
-#GT_del <- geno(del_variants2)$GT
+del_variants
 
 dup_variants <- subset(gene_variants, ALT=="<DUP>")
 dup_variants$seqnames <- gsub("^","chr",dup_variants$seqnames)
@@ -344,9 +338,18 @@ inv_variants
 
 breaks_variants <- subset(gene_variants, ALT!="<DUP>" & ALT!="<DEL>" & ALT!="<INV>")
 breaks_variants$seqnames <- gsub("^","chr",breaks_variants$seqnames)
-breaks_variants 
-strsplit(breaks_variants,split = "<ALT>")
-gsub(breaks_variants)
+breaks_variants <- breaks_variants[order(-breaks_variants$QUAL),]
+breaks_variants
+
+links <- gsub("N","",breaks_variants$ALT)
+links <- gsub("\\[","",links)
+links <- gsub("\\]","",links)
+links_seqname <- sapply(strsplit(links,":"),"[[",1)
+links_seqname <- gsub("^","chr",links_seqname)
+links_start <- sapply(strsplit(links,":"),"[[",2)
+breaks_variants_circos <- data.frame(breaks_variants[,3:5],links_seqname,links_start,links_start)
+breaks_variants_circos
+
 ```
 
 # Circos plot
@@ -400,11 +403,12 @@ RCircos.Tile.Plot(tile.data=breaks_variants[,3:5],
 	track.num=4, side="in")
 
 data(RCircos.Link.Data)
+RCircos.Validate.Genomic.Data(genomic.data = breaks_variants_circos,plot.type = "link",genomic.columns = 3)
 #track.num <- 5
-#RCircos.Link.Plot(RCircos.Link.Data, track.num = 5)
+#RCircos.Link.Plot(link.data=breaks_variants_circos, track.num = 5,start.pos = 0.75,by.chromosome = TRUE)
 
-#data(RCircos.Ribbon.Data)
-#RCircos.Ribbon.Plot(RCircos.Ribbon.Data,track.num = 5, by.chromosome = FALSE, twist = FALSE)
+data(RCircos.Ribbon.Data)
+RCircos.Ribbon.Plot(ribbon.data=breaks_variants_circos,track.num = 5, by.chromosome = FALSE, twist = FALSE)
 
 ```
 
@@ -421,22 +425,23 @@ library(GenomicAlignments)
 #creating igvR instance and initializing a websocket between R 
 #and the web page over which commands and data will travel to
 igv <- igvR()
-setBrowserWindowTitle(igv, "MEF2C")
+setBrowserWindowTitle(igv, "Genetic Variation")
 setGenome(igv, "mm10")
 
 ```
 
 ```{r, showMEF2C}
-showGenomicRegion(igv, "MEF2C")
+showGenomicRegion(igv, "chr2:")
 ```
 
 ```{r roi,  results='hide'}
 #expandimg the region on display and creating a Granges object for other genomic queries
 loc <- getGenomicRegion(igv)
-margin <- 25000
-bigger.loc <- with(loc, sprintf("%s:%d-%d", chrom, start-margin, end+margin))
-mef2c.region <- with(loc, GRanges(seqnames=chrom, IRanges(start=start+margin, end=end+margin)))
-showGenomicRegion(igv, bigger.loc)
+which <- with(loc, GRanges(seqnames=chrom, ranges = IRanges(start, end)))
+param <- ScanBamParam(which=which, what = scanBamWhat())
+x <- readGAlignments("bam/SRX5884275.bam.bai", use.names=TRUE, param=param)
+track <- GenomicAlignmentTrack("ctcf bam", x, visibilityWindow=10000000, trackHeight=200)  # 30000 default
+displayTrack(igv, track)
 ```
 
 ```{r data.frame.track,  results='hide'}
