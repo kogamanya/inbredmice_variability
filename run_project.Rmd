@@ -430,22 +430,24 @@ setGenome(igv, "mm10")
 
 ```
 
-```{r, showMEF2C}
-showGenomicRegion(igv, "chr2:")
+```{r, show region}
+new.region <- "chr2:88,882,214-88,884,364"
+showGenomicRegion(igv, new.region)
 ```
 
-```{r roi,  results='hide'}
+```{r bamfile,  results='hide'}
 #expandimg the region on display and creating a Granges object for other genomic queries
-loc <- getGenomicRegion(igv)
-which <- with(loc, GRanges(seqnames=chrom, ranges = IRanges(start, end)))
+bamFile <-  "bam/SRX5884275.bam"
+file.exists(bamFile)
+which <- GRanges(seqnames="chr2", ranges = IRanges(98667057, 98667057))
 param <- ScanBamParam(which=which, what = scanBamWhat())
-x <- readGAlignments("bam/SRX5884275.bam.bai", use.names=TRUE, param=param)
-track <- GenomicAlignmentTrack("ctcf bam", x, visibilityWindow=10000000, trackHeight=200)  # 30000 default
+x <- readGAlignments(bamFile, index="bam/SRX5884275.bam", 
+                     use.names=FALSE, param=param,with.which_label = FALSE)
+track <- GenomicAlignmentTrack("bam/SRX5884275", x, visibilityWindow=30000, trackHeight=100)  # 30000 default
 displayTrack(igv, track)
 ```
 
 ```{r data.frame.track,  results='hide'}
-load(system.file(package="igvR", "extdata", "bam files"))
 
 ```
 
