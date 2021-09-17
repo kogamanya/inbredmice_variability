@@ -309,6 +309,7 @@ head(gxdf)
 vardf$gene <- gxdf$gene_id
 
 head(vardf)
+write.table(x=vardf,file="vardf.tsv",quote = FALSE,sep = "\t",row.names = FALSE)
 
 ```
 
@@ -403,7 +404,7 @@ RCircos.Tile.Plot(tile.data=breaks_variants[,3:5],
 	track.num=4, side="in")
 
 data(RCircos.Link.Data)
-RCircos.Validate.Genomic.Data(genomic.data = breaks_variants_circos,plot.type = "link",genomic.columns = 3)
+#RCircos.Validate.Genomic.Data(genomic.data = breaks_variants_circos,plot.type = "link",genomic.columns = 3)
 #track.num <- 5
 #RCircos.Link.Plot(link.data=breaks_variants_circos, track.num = 5,start.pos = 0.75,by.chromosome = TRUE)
 
