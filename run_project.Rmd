@@ -1,12 +1,14 @@
 ---
-title: "Working on project studies"
-author: "Kingsley/Mark"
-date: "July 17, 2021"
+title: "Research studies on genetic variation among inbred mice"
+author: "Kingsley Isaac Ogamanya & Mark Ziemann"
+date: "`r Sys.Date()`"
 output:
-  html_document: default
-  rmarkdown::html_vignette: default
-  pdf_document: default
-package: VariantAnnotation
+  html_document:
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 7
+theme: cosmo
 ---
 
 ```{r setup, include=FALSE}
@@ -21,118 +23,75 @@ library("VariantAnnotation")
 
 ```
 
-# Using the VariantAnnotation package in accordance with the package workflow
+## Loading the 6 samples and also the GFF files
 
-## Processing the first two vcf file of SRP199233
-
-```{r, chunk 1}
-#reading in the first two VCF file with VariantAnnotation
-
-vcf_x <- readVcf("VCF_SRP199233/SRX5884275_svtyper.vcf", "mm10")
-
-vcf_y <- readVcf("VCF_SRP199233/SRX5884276_svtyper.vcf", "mm10")
-```
-
-```{r, chunk 2}
-#downloading the gff files and installing a package to unzip the gff file.
-
-#download.file("ftp://ftp.ensembl.org/pub/release-98/gff3/mus_musculus/Mus_musculus.GRCm38.98.gff3.gz",destfile = "Mus_musculus.GRCm38.98.gff3.gz")
-
-#library("R.utils")
-
-#gunzip("Mus_musculus.GRCm38.98.gff3.gz")
-
-```
-
-```{r, chunk 3}
+```{r, loadata}
 # reading in the GFF files
 gff <- read.table("Mus_musculus.GRCm38.98.gff3", sep = "\t", quote = "")
+
+#Reading in the 6animals using the most investigated suitable package
+v275 <- readVcf("VCF_SRP199233/SRX5884275_svtyper.vcf", "mm10")
+v276 <- readVcf("VCF_SRP199233/SRX5884276_svtyper.vcf", "mm10")
+v277 <- readVcf("VCF_SRP199233/SRX5884277_svtyper.vcf", "mm10")
+v278 <- readVcf("VCF_SRP199233/SRX5884278_svtyper.vcf", "mm10")
+v279 <- readVcf("VCF_SRP199233/SRX5884279_svtyper.vcf", "mm10")
+v280 <- readVcf("VCF_SRP199233/SRX5884280_svtyper.vcf", "mm10")
+
+#Having a look at the content of the 6 animals using the `rowRanges` function
+r275 <- rowRanges(v275)
+r276 <- rowRanges(v276)
+r277 <- rowRanges(v277)
+r278 <- rowRanges(v278)
+r279 <- rowRanges(v279)
+r280 <- rowRanges(v280)
+
+#Analyzing the geno of the 6 animals 
+g275 <- geno(v275)$GT
+g276 <- geno(v276)$GT
+g277 <- geno(v277)$GT
+g278 <- geno(v278)$GT
+g279 <- geno(v279)$GT
+g280 <- geno(v280)$GT
+
 ```
 
-```{r, chunk 4, results='hide'}
+## Reorganising and subsetting the data 
 
-# this is a better way to look at the contents of the VCF files
-rowRanges(vcf_x)
-rd_x <- rowRanges(vcf_x)
-info(vcf_x)
-info(VariantAnnotation::header(vcf_x))
-geno(vcf_x)
-geno(VariantAnnotation::header(vcf_x))
-#header(vcf_x) 
-samples(VariantAnnotation::header(vcf_x))
+```{r, chunk 2}
+df <- data.frame(rowRanges(v275),info(v275))  #taking a look into the content for one of the vcf file.
+df <- df[,c("seqnames","start","END")]
+head(df)
 
+alt <- unlist(as.vector(elementMetadata(v275)$ALT))
+svtype <- info(v275)$SVTYPE
 
-#determining the genomic positions of the data using the rowRanges function which contains information from the CHROM, POS and ID fields of the Vcf files.
-rowRanges(vcf_x)
-head(rowRanges(vcf_x, 3))
+gt <- data.frame(g275,g276,g277,g278,g279,g280)
+colnames(gt) <- c("g275","g276","g277","g278","g279","g280") 
+head(gt)
 
-head(rowRanges(vcf_y, 3))
-rd_y <- rowRanges(vcf_y)
+qual <- data.frame(r275$QUAL,r276$QUAL,r277$QUAL,r278$QUAL,r279$QUAL,r280$QUAL)
+
+gt2 <- data.frame(df,alt,svtype,gt,qual)
+gt2
+head(gt2,20)
+
+#plotting a venn diagram showing only homozygous variants
+a_set <- which(g275 == "1/1")
+b_set <- which(g276 == "1/1")
+x_set <- which(g277 == "1/1")
+y_set <- which(g278 == "1/1")
+d_set <- which(g279 == "1/1")
+e_set <- which(g280 == "1/1")
+
+v1 <- list("a" = a_set, "b" = b_set, "x" = x_set, "y" = y_set, "d" = d_set, "e" = e_set)
+print(plot(euler(v1),quantities = TRUE,main="homozygous variants"))
+
 ```
 
-```{r, chunk 5}
-#looking into the individuals fields of both vcf file for the first length 9
-ref(vcf_x)[1:9]
-qual(vcf_x)[1:9]
-alt(vcf_x)[1:9]
+## Creating a function that can analyse two samples
 
-ref(vcf_y)[1:9]
-qual(vcf_y)[1:9]
-alt(vcf_y)[1:9]
-```
-
-```{r, chunk 6, results='hide'}
-#getting the full list of genotype in both vcf files and describing them in `FORMAT` fields as dataframe and class
-geno(vcf_x)
-sapply(geno(vcf_x), DataFrame)
-sapply(geno(vcf_x), class)
-
-
-geno(vcf_y)
-sapply(geno(vcf_y), DataFrame)
-sapply(geno(vcf_y), class)
-
-#I observed lots of differences with the genotype of both vcf when described in dataframe formats
-```
-
-```{r, chunk 7, results='hide'}
-#having a look at the genotype (GT) by analysing the data as a factor 
-geno(VariantAnnotation::header(vcf_x))["GT",]
-GT_x <- geno(vcf_x)$GT
-GT_x <- as.factor(GT_x)
-head(GT_x)
-str(GT_x)
-table(GT_x)
-
-
-geno(VariantAnnotation::header(vcf_y))["GT",]
-GT_y <- geno(vcf_y)$GT
-GT_y <- as.factor(GT_y)
-head(GT_y)
-str(GT_y)
-table(GT_y)
-```
-
-```{r, chunk 8, results='hide'}
-#comparing the two animals genotype as a single data frame 
-GT <- data.frame(GT_x, GT_y)
-head(GT)
-GT[,c("GT_x","GT_y")]
-str(GT)
-
-#filtering the missing data found within the variants
-subset(GT, GT_x != "./." & GT_y != "./.")
-GT_f <- subset(GT, GT_x != "./." & GT_y != "./.")
-GT_f
-
-#using table and barplot to check the level of heterozygous and homozygous found within the two animals
-table(paste(GT_f$GT_x,GT_f$GT_y))
-barplot(table(GT_f$GT_x == GT_f$GT_y))
-```
-
-
-```{r, chunk 9}
-#creating a function that compares two animals together.
+```{r, function,results='hide'}
+# A function comparing two animals together with a visualization on venn diagram for possible future reference.
 compare_vcf <- function(vcf_a,vcf_b) {
     gta <- geno(vcf_a)$GT
     gtb <- geno(vcf_b)$GT
@@ -158,84 +117,56 @@ compare_vcf <- function(vcf_a,vcf_b) {
     return(output)
 }
 
-#function created and to be tried on two different animals read with VariantAnnotation package.
-vcf_a <- readVcf("VCF_SRP199233/SRX5884277_svtyper.vcf", "mm10")
-rd_a <- rowRanges(vcf_a)
+#testing the new function if it works perfectly.
+res <- compare_vcf(v275,v276)
 
-vcf_b <- readVcf("VCF_SRP199233/SRX5884278_svtyper.vcf", "mm10")
-rd_b <- rowRanges(vcf_b)
-
-#attempting the new function.
-res <- compare_vcf(vcf_a,vcf_b)
-
-#str(res)
-#head(res)
+str(res)
+head(res)
 ```
 
-Analyzing all 6 Animals together 
-```{r,chunk 10}
-#reading in the last 2 vcf data.
-vcf_d <- readVcf("VCF_SRP199233/SRX5884279_svtyper.vcf", "mm10")
-rd_d <- rowRanges(vcf_d)
+## proceding with analyzing all 6 Animals together 
 
-vcf_e <- readVcf("VCF_SRP199233/SRX5884280_svtyper.vcf", "mm10")
-rd_e <- rowRanges(vcf_e)
+```{r, filt1}
+#Performing filtering on the 6 samples
+gt3 <- gt2[which(apply(qual,1,min)>=20),]
+head(gt3,20)
 
-#analyzing the geno for the 6 animals respectively.
+gt <- gt[which(apply(qual,1,min)>=20),]
+head(gt,20)
 
-gtx <- geno(vcf_x)$GT
-gty <- geno(vcf_y)$GT
-gta <- geno(vcf_a)$GT
-gtb <- geno(vcf_b)$GT
-gtd <- geno(vcf_d)$GT
-gte <- geno(vcf_e)$GT
+rd <- rowRanges(v275)
+rd <- rd[which(apply(qual,1,min)>=20),]
+head(rd,20)
 
-df <- data.frame(rowRanges(vcf_x),info(vcf_x))  #taking a look into the content for one of the vcf file.
-head(df)
-df <- df[,c("seqnames","start","END","SVTYPE","SVLEN","QUAL")]
-gt <- data.frame(gtx,gty,gta,gtb,gtd,gte)
-gt <- data.frame(df,gt) # this gives us the quality check of each variants for the 6 animals and from here i will need to copy objects gt into gt2 and then subset gt2 for the variants with highest confidence using the QUAL which should be > 30.
-gt2 <- gt
-head(gt2)
-colnames(gt) <- c("x","y","a","b","d","e") #continue working on gt objects to get the true Homozygous variants for all animals and visualize it on a venn diagram
-gt <- subset(gt != "./." & gt != "0/1")
-head(gt)
-table(gt) #having a tabular look of the TRUE Homozygous variants for all 6 animals.
+rows <- which(apply(gt,1,function(x){
+  sd(as.numeric(as.factor(x)))
+})!=0)
 
-a_set <- which(gta == "1/1")
-b_set <- which(gtb == "1/1")
-x_set <- which(gtx == "1/1")
-y_set <- which(gty == "1/1")
-d_set <- which(gtd == "1/1")
-e_set <- which(gte == "1/1")
+gt3 <- gt3[rows,]
+gt <- gt[rows,]
 
-v1 <- list("a" = a_set, "b" = b_set, "x" = x_set, "y" = y_set, "d" = d_set, "e" = e_set)
-print(plot(euler(v1),quantities = TRUE,main="homozygous variants"))
+gtx <- apply(gt,2,function(x) { as.numeric(as.factor(x))})
+rownames(gtx) <- paste(gt3$seqnames,gt3$start,gt3$END,gt3$alt) #changes to be made here in order to have venn diagram on the codes
+gtx
 
+rd <- rd[rows,]
+rd
 
+#from my investigation so far, it is evident that variants with high confidence can only be identify through there quality check
 ```
 
-```{r, heatmap1, fig.width=8, fig.height=8}
-gt2 <- subset(gt2, gt2$QUAL>30)
 
-gt3 <- apply(gt2[,c(7:12)], 2, function(x){
-  as.numeric(as.factor(x))-2
-})
-
-gt23 <- cbind(gt2,gt3)
-head(gt23)
-
-gt2[gt2 == -1] <- NA
-
+```{r,heat1}
+# Plotting a heatmap
+colfunc <- colorRampPalette(c("blue", "red"))
 library(gplots)
+heatmap.2(gtx, trace = "none", scale = "none", 
+  dendrogram='none', Rowv=FALSE, Colv=FALSE, col=colfunc(25),
+  margins = c(5,20), cexRow=.8, cexCol=.9,  main="Genetic Variation")
 
-rownames(gt3) <- paste(gt2$seqnames,gt2$start,sep=":")
-head(rownames(gt3))
-colfunc <- colorRampPalette(c("yellow", "blue", "red"))
-heatmap.2(gt3, trace = "none", scale = "none", dendrogram='none', Rowv=FALSE, Colv=FALSE, col=colfunc(25), margins = c(5,10), cexRow=.8, cexCol=.9,  main="Genetic Variation")
-
-#from my little investigation, i could tell that variants with high confidence can only be identify through there quality check
+# when subset to 30 or higher numbers, less variants shown on the heat-map
 ```
+
 
 ```{r, locate variants}
 #using the package below to locate and annotate the gene variants without necessary needing the gff file at the moment
@@ -244,29 +175,14 @@ library(TxDb.Mmusculus.UCSC.mm10.ensGene)
 
 ```
 
-
 ```{r,loadgff, results='hide'}
 
 gff_file <- "Mus_musculus.GRCm38.98.gff3"
 txdb <- makeTxDbFromGFF(gff_file, format="gff3")
 
-vcfd <- vcf_d #copied vcf_d file to vcfd, so as to use vcfd to have a clear look into how to annotate and locate the gene variants without altering the vcf_d files.
-
-rd <- rowRanges(vcfd)
-
-rd
-rd <- rd[elementMetadata(rd)[,4]>200]
-
-
-#txdb
-#seqlevels(vcfd)
-#seqlevels(txdb)
-
-#intersect(seqlevels(rd),seqlevels(txdb))
-
 ```
 
-## transcript intercept
+## Transcript Intercept
 
 ```{r,txint, results='hide'}
 
@@ -285,10 +201,11 @@ vardf$tx <- txdf$tx_name
 head(vardf)
 vardf_tx <- vardf
 head(vardf_tx)
+dim(vardf_tx)
 
 ```
 
-## gene intercept
+## Gene Intercept
 
 ```{r,gene int, results='hide'}
 
@@ -313,7 +230,7 @@ write.table(x=vardf,file="vardf.tsv",quote = FALSE,sep = "\t",row.names = FALSE)
 
 ```
 
-## locating and merging the gene names 
+## Locating and merging the gene names 
 
 ```{r, gene names}
 
@@ -323,8 +240,9 @@ head(genenames)
 
 gene_variants <- merge(genenames, vardf,by.x="Ensembl ID", by.y="gene")
 head(gene_variants)
-gene_variants
+gene_variants # how comes there are only very few gene variants merging to specific gene names?
 
+# At the start of the investigation it is evident that the 6 samples has 4 types of variation, which are Deletions, Inversion, Duplication and Break-ends. 
 del_variants <- subset(gene_variants, ALT=="<DEL>")
 del_variants$seqnames <- gsub("^","chr",del_variants$seqnames)
 del_variants
@@ -341,125 +259,54 @@ breaks_variants <- subset(gene_variants, ALT!="<DUP>" & ALT!="<DEL>" & ALT!="<IN
 breaks_variants$seqnames <- gsub("^","chr",breaks_variants$seqnames)
 breaks_variants <- breaks_variants[order(-breaks_variants$QUAL),]
 breaks_variants
-
-links <- gsub("N","",breaks_variants$ALT)
-links <- gsub("\\[","",links)
-links <- gsub("\\]","",links)
-links_seqname <- sapply(strsplit(links,":"),"[[",1)
-links_seqname <- gsub("^","chr",links_seqname)
-links_start <- sapply(strsplit(links,":"),"[[",2)
-breaks_variants_circos <- data.frame(breaks_variants[,3:5],links_seqname,links_start,links_start)
-breaks_variants_circos
-
 ```
 
-# Circos plot
+# Circos Plot
 
-Subset from the gene variants objects to get the 4 types of variation to show on the circos plot: ie Deletions, Inversion, Duplications and Break-ends.
+```{r,mycircos,fig.height=7,fig.width=7}
 
-```{r,rcircos,fig.width=8, fig.height=8}
+#Subsetting for a circos plot, showing all variations except inversion
+del_variants <- subset(gt3,svtype=="DEL")[,1:3]
+del_variants$seqnames <- gsub("^","chr",del_variants$seqnames)
+dup_variants <- subset(gt3,svtype=="DUP")[,1:3]
+dup_variants$seqnames <- gsub("^","chr",dup_variants$seqnames)
+breaks_variants <- subset(gt3,svtype=="BND")[,c(1,2,2)]
+breaks_variants <- breaks_variants[grep("GL",breaks_variants$seqnames,invert = TRUE),]
+breaks_variants$seqnames <- gsub("^","chr",breaks_variants$seqnames)
+breaks_variants
+
+links <- subset(gt3,svtype=="BND")
+links <- links[grep("GL",links$seqnames,invert = TRUE),]
+links$alt <- gsub("\\[","\\@",links$alt)
+links$alt <- gsub("\\]","\\@",links$alt)
+links$alt <- sapply(strsplit(links$alt,"@"),"[[",2)
+links$chr2 <- sapply(strsplit(links$alt,":"),"[[",1)
+links$start2 <- as.numeric(sapply(strsplit(links$alt,":"),"[[",2))
+links <- links[,c("seqnames","start","start","chr2","start2","start2")]
+links$seqnames <- gsub("^","chr",links$seqnames)
+links$chr2 <- gsub("^","chr",links$chr2)
+links
 
 library("RCircos")
-
-#having an attempt with the exact way it is carried out on vignette
-data(UCSC.Mouse.GRCm38.CytoBandIdeogram)  #loading the mouse chromosome ideograms
+data(UCSC.Mouse.GRCm38.CytoBandIdeogram)
 head(UCSC.Mouse.GRCm38.CytoBandIdeogram)
-
 
 RCircos.Set.Core.Components(
 	cyto.info=UCSC.Mouse.GRCm38.CytoBandIdeogram,
-	tracks.inside=5, tracks.outside=0)
-#out.file <- "GeneticVariation.pdf"
-#pdf(file=out.file, height=8, width=8, compress=TRUE)
-
-ideo <- RCircos.Get.Plot.Ideogram() #making attempts on making the features or components of the circos biggger.
-rows <- which(ideo$BandColor =="red")
-ideo$BandColor[rows] <- "green"
-RCircos.Reset.Plot.Ideogram(ideo)
-
-params <- RCircos.Get.Plot.Parameters()
-params$base.per.unit <- 6000
-RCircos.Reset.Plot.Parameters(params)
-
-
-positions <- RCircos.Get.Plot.Positions();
-positions[1, 3] <- 0;
-RCircos.Reset.Plot.Positions(positions);
+	tracks.inside=4, tracks.outside=0)
 
 RCircos.Set.Plot.Area()
 RCircos.Chromosome.Ideogram.Plot()
 
-data(RCircos.Tile.Data);
+RCircos.Tile.Plot(tile.data=del_variants, track.num=1, side="in")
 
-RCircos.Tile.Plot(tile.data=head(del_variants[,3:5]), 
-	track.num=1, side="in")
+RCircos.Tile.Plot(tile.data=dup_variants, track.num=2, side="in")
 
-RCircos.Tile.Plot(tile.data=dup_variants[,3:5], 
-	track.num=2, side="in")
+RCircos.Tile.Plot(tile.data=breaks_variants, track.num=3, side="in") #changes made here
 
-RCircos.Tile.Plot(tile.data=inv_variants[,3:5], 
-	track.num=3, side="in")
-
-RCircos.Tile.Plot(tile.data=breaks_variants[,3:5], 
-	track.num=4, side="in")
-
-data(RCircos.Link.Data)
-#RCircos.Validate.Genomic.Data(genomic.data = breaks_variants_circos,plot.type = "link",genomic.columns = 3)
-#track.num <- 5
-#RCircos.Link.Plot(link.data=breaks_variants_circos, track.num = 5,start.pos = 0.75,by.chromosome = TRUE)
-
-data(RCircos.Ribbon.Data)
-RCircos.Ribbon.Plot(ribbon.data=breaks_variants_circos,track.num = 5, by.chromosome = FALSE, twist = FALSE)
+RCircos.Link.Plot(link.data=links, track.num = 4)
 
 ```
-
-```{r, loadLibraries,  results='hide'}
-#loading the required libraries needed for the genome browser
-library(igvR)
-library(MotifDb)
-library(BSgenome)
-library(AnnotationHub)
-library(GenomicAlignments)
-```
-
-```{r, createLoad}
-#creating igvR instance and initializing a websocket between R 
-#and the web page over which commands and data will travel to
-igv <- igvR()
-setBrowserWindowTitle(igv, "Genetic Variation")
-setGenome(igv, "mm10")
-
-```
-
-```{r, show region}
-new.region <- "chr2:88,882,214-88,884,364"
-showGenomicRegion(igv, new.region)
-```
-
-```{r bamfile,  results='hide'}
-#expandimg the region on display and creating a Granges object for other genomic queries
-bamFile <-  "bam/SRX5884275.bam"
-file.exists(bamFile)
-which <- GRanges(seqnames="chr2", ranges = IRanges(98667057, 98667057))
-param <- ScanBamParam(which=which, what = scanBamWhat())
-x <- readGAlignments(bamFile, index="bam/SRX5884275.bam", 
-                     use.names=FALSE, param=param,with.which_label = FALSE)
-track <- GenomicAlignmentTrack("bam/SRX5884275", x, visibilityWindow=30000, trackHeight=100)  # 30000 default
-displayTrack(igv, track)
-```
-
-```{r data.frame.track,  results='hide'}
-
-```
-
-
-
-
-
-
-
-
-
 
 ## Session Information
 
@@ -468,6 +315,3 @@ displayTrack(igv, track)
 sessionInfo()
 
 ```
-
-
-
