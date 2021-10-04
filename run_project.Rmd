@@ -23,7 +23,7 @@ library("VariantAnnotation")
 
 ```
 
-## Loading the 6 samples and also the GFF files
+# Loading the 6 samples and also the GFF files
 
 ```{r, loadata}
 # reading in the GFF files
@@ -55,7 +55,7 @@ g280 <- geno(v280)$GT
 
 ```
 
-## Reorganising and subsetting the data 
+# Reorganising and subsetting the data 
 
 ```{r, chunk 2}
 df <- data.frame(rowRanges(v275),info(v275))  #taking a look into the content for one of the vcf file.
@@ -72,7 +72,7 @@ head(gt)
 qual <- data.frame(r275$QUAL,r276$QUAL,r277$QUAL,r278$QUAL,r279$QUAL,r280$QUAL)
 
 gt2 <- data.frame(df,alt,svtype,gt,qual)
-gt2
+#gt2
 head(gt2,20)
 
 #plotting a venn diagram showing only homozygous variants
@@ -88,7 +88,7 @@ print(plot(euler(v1),quantities = TRUE,main="homozygous variants"))
 
 ```
 
-## Creating a function that can analyse two samples
+# Creating a function that can analyse two samples
 
 ```{r, function,results='hide'}
 # A function comparing two animals together with a visualization on venn diagram for possible future reference.
@@ -124,7 +124,7 @@ str(res)
 head(res)
 ```
 
-## proceding with analyzing all 6 Animals together 
+# proceding with analyzing all 6 Animals together 
 
 ```{r, filt1}
 #Performing filtering on the 6 samples
@@ -146,7 +146,7 @@ gt3 <- gt3[rows,]
 gt <- gt[rows,]
 
 gtx <- apply(gt,2,function(x) { as.numeric(as.factor(x))})
-rownames(gtx) <- paste(gt3$seqnames,gt3$start,gt3$END,gt3$alt) #changes to be made here in order to have venn diagram on the codes
+rownames(gtx) <- paste(gt3$seqnames,gt3$start,gt3$END,gt3$alt)
 gtx
 
 rd <- rd[rows,]
@@ -171,7 +171,6 @@ heatmap.2(gtx, trace = "none", scale = "none",
 ```{r, locate variants}
 #using the package below to locate and annotate the gene variants without necessary needing the gff file at the moment
 library(TxDb.Mmusculus.UCSC.mm10.ensGene)
-#txdb <- TxDb.Mmusculus.UCSC.mm10.ensGene
 
 ```
 
@@ -182,7 +181,7 @@ txdb <- makeTxDbFromGFF(gff_file, format="gff3")
 
 ```
 
-## Transcript Intercept
+# Transcript Intercept
 
 ```{r,txint, results='hide'}
 
@@ -205,7 +204,7 @@ dim(vardf_tx)
 
 ```
 
-## Gene Intercept
+# Gene Intercept
 
 ```{r,gene int, results='hide'}
 
@@ -230,7 +229,7 @@ write.table(x=vardf,file="vardf.tsv",quote = FALSE,sep = "\t",row.names = FALSE)
 
 ```
 
-## Locating and merging the gene names 
+# Locating and merging the gene names 
 
 ```{r, gene names}
 
@@ -302,13 +301,13 @@ RCircos.Tile.Plot(tile.data=del_variants, track.num=1, side="in")
 
 RCircos.Tile.Plot(tile.data=dup_variants, track.num=2, side="in")
 
-RCircos.Tile.Plot(tile.data=breaks_variants, track.num=3, side="in") #changes made here
+RCircos.Tile.Plot(tile.data=breaks_variants, track.num=3, side="in")
 
 RCircos.Link.Plot(link.data=links, track.num = 4)
 
 ```
 
-## Session Information
+# Session Information
 
 ```{r, session}
 
