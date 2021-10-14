@@ -30,12 +30,12 @@ library("VariantAnnotation")
 gff <- read.table("Mus_musculus.GRCm38.98.gff3", sep = "\t", quote = "")
 
 #Reading in the 6animals using the most investigated suitable package
-v275 <- readVcf("VCF_SRP199233/SRX5884275_svtyper.vcf", "mm10")
-v276 <- readVcf("VCF_SRP199233/SRX5884276_svtyper.vcf", "mm10")
-v277 <- readVcf("VCF_SRP199233/SRX5884277_svtyper.vcf", "mm10")
-v278 <- readVcf("VCF_SRP199233/SRX5884278_svtyper.vcf", "mm10")
-v279 <- readVcf("VCF_SRP199233/SRX5884279_svtyper.vcf", "mm10")
-v280 <- readVcf("VCF_SRP199233/SRX5884280_svtyper.vcf", "mm10")
+v275 <- readVcf("VCF_SRP199233/SRX5884275_svtyper.vcf", "mm39")
+v276 <- readVcf("VCF_SRP199233/SRX5884276_svtyper.vcf", "mm39")
+v277 <- readVcf("VCF_SRP199233/SRX5884277_svtyper.vcf", "mm39")
+v278 <- readVcf("VCF_SRP199233/SRX5884278_svtyper.vcf", "mm39")
+v279 <- readVcf("VCF_SRP199233/SRX5884279_svtyper.vcf", "mm39")
+v280 <- readVcf("VCF_SRP199233/SRX5884280_svtyper.vcf", "mm39")
 
 #Having a look at the content of the 6 animals using the `rowRanges` function
 r275 <- rowRanges(v275)
@@ -174,7 +174,7 @@ heatmap.2(gtx, trace = "none", scale = "none",
 
 ```{r, locate variants}
 #using the package below to locate and annotate the gene variants without necessary needing the gff file at the moment
-library(TxDb.Mmusculus.UCSC.mm10.ensGene)
+library(TxDb.Mmusculus.UCSC.mm10.ensGene) # couldn't change to mm39
 
 ```
 
