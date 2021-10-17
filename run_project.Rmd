@@ -150,8 +150,8 @@ rownames(gtx) <- paste(gt3$seqnames,gt3$start,gt3$END,gt3$alt)
 gtx
 #extracting the bed files for the variants regions of this study for further investigation on IGV
 myrownames <- rownames(gtx)
-myregions <- do.call(rbind,strsplit(myrownames," "))
-write.table(x=myregions,file="myregions.bed",quote=FALSE,sep="\t", col.names = FALSE,row.names = FALSE)
+srp_regions <- do.call(rbind,strsplit(myrownames," "))
+write.table(x=srp_regions,file="srp_regions.bed",quote=FALSE,sep="\t", col.names = FALSE,row.names = FALSE)
 
 rd <- rd[rows,]
 rd
