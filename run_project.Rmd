@@ -27,7 +27,9 @@ library("VariantAnnotation")
 
 ```{r, loadata}
 # reading in the GFF files
-gff <- read.table("Mus_musculus.GRCm38.98.gff3", sep = "\t", quote = "")
+#download.file("http://ftp.ensembl.org/pub/release-104/gff3/mus_musculus/Mus_musculus.GRCm39.104.gff3.gz",destfile = "Mus_musculus.GRCm39.104.gff3.gz")
+
+gff <- read.table("Mus_musculus.GRCm39.104.gff3.gz", sep = "\t", quote = "")
 
 #Reading in the 6animals using the most investigated suitable package
 v275 <- readVcf("VCF_SRP199233/SRX5884275_svtyper.vcf", "mm39")
@@ -174,13 +176,13 @@ heatmap.2(gtx, trace = "none", scale = "none",
 
 ```{r, locate variants}
 #using the package below to locate and annotate the gene variants without necessary needing the gff file at the moment
-library(TxDb.Mmusculus.UCSC.mm10.ensGene) # couldn't change to mm39
+library(TxDb.Mmusculus.UCSC.mm39.refGene) 
 
 ```
 
 ```{r,loadgff, results='hide'}
 
-gff_file <- "Mus_musculus.GRCm38.98.gff3"
+gff_file <- "Mus_musculus.GRCm39.104.gff3.gz"
 txdb <- makeTxDbFromGFF(gff_file, format="gff3")
 
 ```
