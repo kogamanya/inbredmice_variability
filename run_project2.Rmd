@@ -1,5 +1,5 @@
 ---
-title: "Research studies on SRP_199233 using the mm39 reference genome"
+title: "Research studies on SRP_199233 using the mm10 reference genome"
 author: "Kingsley Isaac Ogamanya & Mark Ziemann"
 date: "`r Sys.Date()`"
 output:
@@ -23,21 +23,16 @@ library("VariantAnnotation")
 
 ```
 
-# Loading the 6 samples and also the GFF files
+##  Loading the 6 samples
 
-```{r, loadata}
-# reading in the GFF files
-#download.file("http://ftp.ensembl.org/pub/release-104/gff3/mus_musculus/Mus_musculus.GRCm39.104.gff3.gz",destfile = "Mus_musculus.GRCm39.104.gff3.gz")
-
-gff <- read.table("Mus_musculus.GRCm39.104.gff3.gz", sep = "\t", quote = "")
-
+```{r, chunk 1}
 #Reading in the 6animals using the most investigated suitable package
-v275 <- readVcf("VCF_SRP199233_GRCm39/SRX5884275_svtyper.vcf", "GRCm39")
-v276 <- readVcf("VCF_SRP199233_GRCm39/SRX5884276_svtyper.vcf", "GRCm39")
-v277 <- readVcf("VCF_SRP199233_GRCm39/SRX5884277_svtyper.vcf", "GRCm39")
-v278 <- readVcf("VCF_SRP199233_GRCm39/SRX5884278_svtyper.vcf", "GRCm39")
-v279 <- readVcf("VCF_SRP199233_GRCm39/SRX5884279_svtyper.vcf", "GRCm39")
-v280 <- readVcf("VCF_SRP199233_GRCm39/SRX5884280_svtyper.vcf", "GRCm39")
+v275 <- readVcf("VCF_SRP199233/SRX5884275_svtyper.vcf", "mm10")
+v276 <- readVcf("VCF_SRP199233/SRX5884276_svtyper.vcf", "mm10")
+v277 <- readVcf("VCF_SRP199233/SRX5884277_svtyper.vcf", "mm10")
+v278 <- readVcf("VCF_SRP199233/SRX5884278_svtyper.vcf", "mm10")
+v279 <- readVcf("VCF_SRP199233/SRX5884279_svtyper.vcf", "mm10")
+v280 <- readVcf("VCF_SRP199233/SRX5884280_svtyper.vcf", "mm10")
 
 #Having a look at the content of the 6 animals using the `rowRanges` function
 r275 <- rowRanges(v275)
@@ -54,12 +49,27 @@ g277 <- geno(v277)$GT
 g278 <- geno(v278)$GT
 g279 <- geno(v279)$GT
 g280 <- geno(v280)$GT
+```
+
+```{r, chunk 2}
+#downloading the gff files and installing a package to unzip the gff file.
+
+#download.file("ftp://ftp.ensembl.org/pub/release-98/gff3/mus_musculus/Mus_musculus.GRCm38.98.gff3.gz",destfile = "Mus_musculus.GRCm38.98.gff3.gz")
+
+#library("R.utils")
+
+#gunzip("Mus_musculus.GRCm38.98.gff3.gz")
 
 ```
 
-# Reorganising and subsetting the data 
+```{r, chunk 3}
+# reading in the GFF files
+gff <- read.table("Mus_musculus.GRCm38.98.gff3", sep = "\t", quote = "")
+```
 
-```{r, chunk 2}
+# Analyzing all 6 Animals together 
+```{r, chunk 4}
+
 df <- data.frame(rowRanges(v275),info(v275))  #taking a look into the content for one of the vcf file.
 df <- df[,c("seqnames","start","END")]
 head(df)
@@ -87,12 +97,10 @@ e_set <- which(g280 == "1/1")
 
 v1 <- list("a" = a_set, "b" = b_set, "x" = x_set, "y" = y_set, "d" = d_set, "e" = e_set)
 print(plot(euler(v1),quantities = TRUE,main="homozygous variants"))
-
 ```
 
-# Creating a function that can analyse two samples
-
-```{r, function,results='hide'}
+# Function that can analyze 2 Animals together 
+```{r, chunk 5}
 # A function comparing two animals together with a visualization on venn diagram for possible future reference.
 compare_vcf <- function(vcf_a,vcf_b) {
     gta <- geno(vcf_a)$GT
@@ -124,11 +132,10 @@ res <- compare_vcf(v275,v276)
 
 str(res)
 head(res)
+
 ```
 
-# proceding with analyzing all 6 Animals together 
-
-```{r, filt1}
+```{r,chunk 6}
 #Performing filtering on the 6 samples
 gt3 <- gt2[which(apply(qual,1,min)>=20),]
 head(gt3,20)
@@ -152,17 +159,14 @@ rownames(gtx) <- paste(gt3$seqnames,gt3$start,gt3$END,gt3$alt)
 gtx
 #extracting the bed files for the variants regions of this study for further investigation on IGV
 myrownames <- rownames(gtx)
-srp_regions <- do.call(rbind,strsplit(myrownames," "))
-write.table(x=srp_regions,file="srp_regions.bed",quote=FALSE,sep="\t", col.names = FALSE,row.names = FALSE)
+srp2_regions <- do.call(rbind,strsplit(myrownames," "))
+write.table(x=srp2_regions,file="srp2_regions.bed",quote=FALSE,sep="\t", col.names = FALSE,row.names = FALSE)
 
 rd <- rd[rows,]
 rd
-
-#from my investigation so far, it is evident that variants with high confidence can only be identify through there quality check
 ```
-
-
-```{r,heat1, fig.width=8, fig.height=8}
+# Heat map
+```{r, heatmap1, fig.width=8, fig.height=8}
 # Plotting a heatmap
 colfunc <- colorRampPalette(c("blue", "red"))
 library(gplots)
@@ -173,23 +177,23 @@ heatmap.2(gtx, trace = "none", scale = "none",
 # when subset to 30 or higher numbers, less variants shown on the heat-map
 ```
 
-
 ```{r, locate variants}
 #using the package below to locate and annotate the gene variants without necessary needing the gff file at the moment
-library(TxDb.Mmusculus.UCSC.mm39.refGene) 
+library(TxDb.Mmusculus.UCSC.mm10.ensGene)
 
 ```
 
-```{r,loadgff, results='hide'}
 
-gff_file <- "Mus_musculus.GRCm39.104.gff3.gz"
+```{r,loadgff}
+
+gff_file <- "Mus_musculus.GRCm38.98.gff3"
 txdb <- makeTxDbFromGFF(gff_file, format="gff3")
 
 ```
 
-# Transcript Intercept
+## transcript intercept
 
-```{r,txint, results='hide'}
+```{r,txint}
 
 tx <- transcripts(txdb)
 ol <- findOverlaps(rd,tx)
@@ -207,12 +211,11 @@ head(vardf)
 vardf_tx <- vardf
 head(vardf_tx)
 dim(vardf_tx)
-
 ```
 
-# Gene Intercept
+## gene intercept
 
-```{r,gene int, results='hide'}
+```{r,gene int}
 
 gx <- genes(txdb)
 ol <- findOverlaps(rd,gx,select = "all")
@@ -233,21 +236,21 @@ vardf$gene <- gxdf$gene_id
 head(vardf)
 write.table(x=vardf,file="vardf.tsv",quote = FALSE,sep = "\t",row.names = FALSE)
 
+
 ```
 
-# Locating and merging the gene names 
-
+#locating and merging the gene names 
 ```{r, gene names}
 
-genenames <- read.table("Mus_musculus.GRCm38.98.gff3.genenames.tsv", header = FALSE, sep = "\t", quote = "") # need to extract another genenames for mm39
+genenames <- read.table("Mus_musculus.GRCm38.98.gff3.genenames.tsv", header = FALSE, sep = "\t", quote = "")
 colnames(genenames) <- c("Ensembl ID","Gene Name")
 head(genenames)
 
 gene_variants <- merge(genenames, vardf,by.x="Ensembl ID", by.y="gene")
 head(gene_variants)
-gene_variants
+gene_variants # how comes there are only very few gene variants merging to specific gene names?
 
-#At the start of the investigation it is evident that the 6 samples has 4 types of variation, which are Deletions, Inversion, Duplication and Break-ends. 
+# At the start of the investigation it is evident that the 6 samples has 4 types of variation, which are Deletions, Inversion, Duplication and Break-ends. 
 del_variants <- subset(gene_variants, ALT=="<DEL>")
 del_variants$seqnames <- gsub("^","chr",del_variants$seqnames)
 del_variants
@@ -293,7 +296,7 @@ links$chr2 <- gsub("^","chr",links$chr2)
 links
 
 library("RCircos")
-data(UCSC.Mouse.GRCm38.CytoBandIdeogram) #decision and answers needed for the Circos mouse genome
+data(UCSC.Mouse.GRCm38.CytoBandIdeogram)
 head(UCSC.Mouse.GRCm38.CytoBandIdeogram)
 
 RCircos.Set.Core.Components(
@@ -312,11 +315,10 @@ RCircos.Tile.Plot(tile.data=breaks_variants, track.num=3, side="in")
 RCircos.Link.Plot(link.data=links, track.num = 4)
 
 ```
-
-# Session Information
-
+# Session
 ```{r, session}
-
 sessionInfo()
-
 ```
+
+
+
