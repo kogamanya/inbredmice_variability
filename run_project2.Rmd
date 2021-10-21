@@ -23,7 +23,7 @@ library("VariantAnnotation")
 
 ```
 
-##  Loading the 6 samples
+#  Loading the 6 samples
 
 ```{r, chunk 1}
 #Reading in the 6animals using the most investigated suitable package
@@ -100,7 +100,7 @@ print(plot(euler(v1),quantities = TRUE,main="homozygous variants"))
 ```
 
 # Function that can analyze 2 Animals together 
-```{r, chunk 5}
+```{r, chunk 5, results='hide'}
 # A function comparing two animals together with a visualization on venn diagram for possible future reference.
 compare_vcf <- function(vcf_a,vcf_b) {
     gta <- geno(vcf_a)$GT
@@ -191,9 +191,9 @@ txdb <- makeTxDbFromGFF(gff_file, format="gff3")
 
 ```
 
-## transcript intercept
+# transcript intercept
 
-```{r,txint}
+```{r,txint, results='hide'}
 
 tx <- transcripts(txdb)
 ol <- findOverlaps(rd,tx)
@@ -213,9 +213,9 @@ head(vardf_tx)
 dim(vardf_tx)
 ```
 
-## gene intercept
+# gene intercept
 
-```{r,gene int}
+```{r,gene int,results='hide'}
 
 gx <- genes(txdb)
 ol <- findOverlaps(rd,gx,select = "all")
