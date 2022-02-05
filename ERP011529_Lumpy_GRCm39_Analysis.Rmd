@@ -1,0 +1,153 @@
+---
+title: "Inbred mouse SV genotyping on Study ERP011529"
+author: "Kingsley Isaac Ogamanya & Mark Ziemann"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 7
+theme: cosmo
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library("GenomicRanges")
+library("R.utils")
+library("Biostrings")
+library("eulerr")
+library("SummarizedExperiment")
+library("VariantAnnotation")
+
+```
+
+## Loading the data with the GFF files
+
+ERX1059306_svtyper.vcf
+ERX1059307_svtyper.vcf
+ERX1059308_svtyper.vcf
+ERX1059309_svtyper.vcf
+ERX1059310_svtyper.vcf
+ERX1059311_svtyper.vcf
+ERX1059312_svtyper.vcf
+ERX1059313_svtyper.vcf
+ERX1059314_svtyper.vcf
+
+```{r, loaddata}
+
+# reading in the GFF files
+gff <- read.table("Mus_musculus.GRCm39.104.gff3.gz", sep = "\t", quote = "")
+
+v06 <- readVcf("VCF_ERP011529_GRCm39/ERX1059306_svtyper.vcf", "GRCm39")
+v07 <- readVcf("VCF_ERP011529_GRCm39/ERX1059307_svtyper.vcf", "GRCm39")
+v08 <- readVcf("VCF_ERP011529_GRCm39/ERX1059308_svtyper.vcf", "GRCm39")
+v09 <- readVcf("VCF_ERP011529_GRCm39/ERX1059309_svtyper.vcf", "GRCm39")
+v10 <- readVcf("VCF_ERP011529_GRCm39/ERX1059310_svtyper.vcf", "GRCm39")
+v11 <- readVcf("VCF_ERP011529_GRCm39/ERX1059311_svtyper.vcf", "GRCm39")
+v12 <- readVcf("VCF_ERP011529_GRCm39/ERX1059312_svtyper.vcf", "GRCm39")
+v13 <- readVcf("VCF_ERP011529_GRCm39/ERX1059313_svtyper.vcf", "GRCm39")
+v14 <- readVcf("VCF_ERP011529_GRCm39/ERX1059314_svtyper.vcf", "GRCm39")
+
+r06 <- rowRanges(v06)
+r07 <- rowRanges(v07)
+r08 <- rowRanges(v08)
+r09 <- rowRanges(v09)
+r10 <- rowRanges(v10)
+r11 <- rowRanges(v11)
+r12 <- rowRanges(v12)
+r13 <- rowRanges(v13)
+r14 <- rowRanges(v14)
+
+g06 <- as.vector(geno(v06)$GT)
+g07 <- as.vector(geno(v07)$GT)
+g08 <- as.vector(geno(v08)$GT)
+g09 <- as.vector(geno(v09)$GT)
+g10 <- as.vector(geno(v10)$GT)
+g11 <- as.vector(geno(v11)$GT)
+g12 <- as.vector(geno(v12)$GT)
+g13 <- as.vector(geno(v13)$GT)
+g14 <- as.vector(geno(v14)$GT)
+
+```
+
+## Reorganising the data
+
+```{r,chunk 10}
+
+df <- data.frame(rowRanges(v06),info(v06))  #taking a look into the content for one of the vcf file.
+df <- df[,c("seqnames","start","END")]
+head(df)
+
+alt <- unlist(as.vector(elementMetadata(v06)$ALT))
+svtype <- info(v06)$SVTYPE
+
+# need to add g14
+str(g14)
+gt <- data.frame(g06,g07,g08,g09,g10,g11,g12,g13,g14)
+colnames(gt) <- c("g06","g07","g08","g09","g10","g11","g12","g13","g14") 
+
+qual <- data.frame(r06$QUAL,r07$QUAL,r08$QUAL,r09$QUAL,r10$QUAL,r11$QUAL,r11$QUAL,r12$QUAL,r13$QUAL,r14$QUAL)
+
+gt2 <- data.frame(df,alt,svtype,gt,qual) 
+
+head(gt2,20)
+
+```
+
+# Proceding with analyzing and filtering all Animals together 
+
+```{r,filt1}
+
+gt3 <- gt2[which(apply(qual,1,min)>=20),]
+head(gt3,20)
+
+gt <- gt[which(apply(qual,1,min)>=20),]
+head(gt,20)
+
+rd <- rowRanges(v06)
+rd <- rd[which(apply(qual,1,min)>=20),]
+head(rd,20)
+
+rows <- which(apply(gt,1,function(x){
+  sd(as.numeric(as.factor(x)))
+})!=0)
+
+gt3 <- gt3[rows,]
+gt <- gt[rows,]
+
+gtx <- apply(gt,2,function(x) { as.numeric(as.factor(x))})
+rownames(gtx) <- paste(gt3$seqnames,gt3$start,gt3$END,gt3$alt)
+gtx
+
+#extracting the bed files for the variants regions of this study for further investigation on IGV
+myrownames <- rownames(gtx)
+Erp_regions <- do.call(rbind,strsplit(myrownames," "))
+write.table(x=Erp_regions,file="Erp_regions.bed",quote=FALSE,sep="\t", col.names = FALSE,row.names = FALSE)
+
+rd <- rd[rows,]
+rd
+
+```
+
+# Plotting Heat Map
+
+```{r,heat1, fig.width=8, fig.height=8}
+
+colfunc <- colorRampPalette(c("blue", "red"))
+library(gplots)
+heatmap.2(gtx, trace = "none", scale = "none", 
+  dendrogram='none', Rowv=FALSE, Colv=FALSE, col=colfunc(25),
+  margins = c(5,20), cexRow=.8, cexCol=.9,  main="Genetic Variation")
+
+```
+
+## Session Information
+
+```{r, session}
+
+sessionInfo()
+
+```
