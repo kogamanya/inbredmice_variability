@@ -1,0 +1,73 @@
+---
+title: "Inbred mouse short tandem repeats (STRs) Analysis on Study SRP199233"
+author: "Kingsley Isaac Ogamanya & Mark Ziemann"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 7
+theme: cosmo
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Loading and reading the tsv file
+```{r,chunk1}
+#loading and reading in the str file
+variants <- readr::read_tsv("SRP_str_res/SRP199233_merge.outlier_locus.tsv", col_names = TRUE,show_col_types =FALSE,skip_empty_rows = TRUE)
+
+#creating a new row showing the subset of repeats that took place only in all samples. 
+variants$length <- unlist(lapply(strsplit(variants$counts,","),length))
+variants <- subset(variants, length >5)
+
+#extracting the counts column and converting to numeric
+df_counts <- do.call(rbind,strsplit(variants$counts,",", fixed=TRUE))
+df_counts <- apply(df_counts, MARGIN = 2, FUN = as.numeric)
+
+```
+
+# Plotting heat_map
+```{r,hit1,fig.height=7,fig.width=7}
+#deciding on our rownames and colnames
+rownames(df_counts) <- paste(variants$contig,variants$start,variants$end,variants$motif)
+colnames(df_counts) <- c("g275","g276","g277","g278","g279","g280") 
+
+#extracting the bed files for the repeats regions of this analysis for further investigation on IGV
+str_rownames <- rownames(df_counts)
+str_regions <- do.call(rbind,strsplit(str_rownames," "))
+write.table(x=str_regions,file="Str_regions.bed",quote=FALSE,sep="\t", col.names = FALSE,row.names = FALSE)
+
+#plotting the heatmap showing the repeats on each sample
+colfunc <- colorRampPalette(c("blue", "red"))
+library(gplots)
+heatmap.2(df_counts, trace = "none", scale = "none", 
+  dendrogram='none', Rowv=FALSE, Colv=FALSE, col=colfunc(25),
+  margins = c(5,20), cexRow=.8, cexCol=.9,  main="STRs")
+```
+
+# Analyzing the CV for column of interest 
+```{r,chunk2,fig.height=7,fig.width=7}
+#creating a function to decide the coefficient variation on each row of variants$counts for the samples.
+cv <- function(x) {
+  mymean <- mean(x)
+  mysd <- sd(x)
+  cv <- mysd/mymean
+  signif(cv,3)
+}
+#plotting a graph showing the coefficient variation on each row of variants$counts for the samples
+my_cv <- apply(df_counts, MARGIN = 1, FUN = cv)
+my_cv[order(my_cv)]
+par(mar =c(5,15,3,1))
+barplot(my_cv[order(my_cv)], horiz = TRUE,las =1,xlab = "CV")
+
+```
+
+# Session Information
+```{r, session}
+
+sessionInfo()
+
+```
