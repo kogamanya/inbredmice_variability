@@ -1,5 +1,5 @@
 ---
-title: "Inbred mouse short tandem repeats (STRs) Analysis on Study SRP199233"
+title: "Inbred mouse short tandem repeats (STRs) Analysis on Study ERP011529"
 author: "Kingsley Isaac Ogamanya & Mark Ziemann"
 date: "`r Sys.Date()`"
 output:
@@ -10,6 +10,7 @@ output:
     fig_height: 7
 theme: cosmo
 ---
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -17,11 +18,11 @@ knitr::opts_chunk$set(echo = TRUE)
 # Loading and reading the tsv file
 ```{r,chunk1}
 #loading and reading in the str file
-variants <- readr::read_tsv("SRP_str_res/SRP199233_merge.outlier_locus.tsv", col_names = TRUE,show_col_types =FALSE,skip_empty_rows = TRUE)
+variants <- readr::read_tsv("ERP_str_res/ERP011529_merge.outlier_locus.tsv", col_names = TRUE,show_col_types =FALSE,skip_empty_rows = TRUE)
 
 #creating a new row showing the subset of repeats that took place only in all samples. 
 variants$length <- unlist(lapply(strsplit(variants$counts,","),length))
-variants <- subset(variants, length >5)
+variants <- subset(variants, length >1)
 
 #extracting the counts column and converting to numeric
 df_counts <- do.call(rbind,strsplit(variants$counts,",", fixed=TRUE))
@@ -33,12 +34,12 @@ df_counts <- apply(df_counts, MARGIN = 2, FUN = as.numeric)
 ```{r,hit1,fig.height=7,fig.width=7}
 #deciding on our rownames and colnames
 rownames(df_counts) <- paste(variants$contig,variants$start,variants$end,variants$motif)
-colnames(df_counts) <- c("g275","g276","g277","g278","g279","g280") 
+colnames(df_counts) <- c("g06","g07","g08") 
 
 #extracting the bed files for the repeats regions of this analysis for further investigation on IGV
 str_rownames <- rownames(df_counts)
 str_regions <- do.call(rbind,strsplit(str_rownames," "))
-write.table(x=str_regions,file="SRP_Str_regions.bed",quote=FALSE,sep="\t", col.names = FALSE,row.names = FALSE)
+write.table(x=str_regions,file="ERP_Str_regions.bed",quote=FALSE,sep="\t", col.names = FALSE,row.names = FALSE)
 
 #plotting the heatmap showing the repeats on each sample
 colfunc <- colorRampPalette(c("blue", "red"))
