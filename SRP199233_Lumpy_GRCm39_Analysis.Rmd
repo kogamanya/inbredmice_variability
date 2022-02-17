@@ -32,7 +32,7 @@ library("VariantAnnotation")
 # reading in the GFF files
 #download.file("http://ftp.ensembl.org/pub/release-104/gff3/mus_musculus/Mus_musculus.GRCm39.104.gff3.gz",destfile = "Mus_musculus.GRCm39.104.gff3.gz")
 
-gff <- read.table("Mus_musculus.GRCm39.104.gff3.gz", sep = "\t", quote = "")
+gff <- read.table("Mus_musculus.GRCm39.104.gff3", sep = "\t", quote = "")
 
 #Reading in the 6animals using the most investigated suitable package
 v75 <- readVcf("VCF_SRP199233_GRCm39/SRX5884275_svtyper.vcf", "GRCm39")
