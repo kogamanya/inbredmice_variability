@@ -24,7 +24,7 @@ library("VariantAnnotation")
 
 ```
 
-## Loading the data with the GFF files
+# Loading the data with the GFF files
 
 ERX1059306_svtyper.vcf
 ERX1059307_svtyper.vcf
@@ -39,7 +39,7 @@ ERX1059314_svtyper.vcf
 ```{r, loaddata}
 
 # reading in the GFF files
-gff <- read.table("Mus_musculus.GRCm39.104.gff3.gz", sep = "\t", quote = "")
+gff <- read.table("Mus_musculus.GRCm39.104.gff3", sep = "\t", quote = "")
 
 v06 <- readVcf("VCF_ERP011529_GRCm39/ERX1059306_svtyper.vcf", "GRCm39")
 v07 <- readVcf("VCF_ERP011529_GRCm39/ERX1059307_svtyper.vcf", "GRCm39")
@@ -73,7 +73,7 @@ g14 <- as.vector(geno(v14)$GT)
 
 ```
 
-## Reorganising the data
+# Reorganising the data
 
 ```{r,chunk 10}
 
@@ -144,7 +144,158 @@ heatmap.2(gtx, trace = "none", scale = "none",
 
 ```
 
-## Session Information
+
+```{r, locate variants}
+#using the package below to locate and annotate the gene variants without the necessary need for the gff file
+library(TxDb.Mmusculus.UCSC.mm39.refGene) 
+
+```
+
+
+```{r,loadgff, results='hide'}
+
+gff_file <- "Mus_musculus.GRCm39.104.gff3"
+txdb <- makeTxDbFromGFF(gff_file, format="gff3")
+
+```
+
+# Transcript Intercept
+
+```{r,txint, results='hide'}
+
+tx <- transcripts(txdb)
+ol <- findOverlaps(rd,tx)
+ol
+var_ol <- rd[queryHits(ol)]
+tx_ol <- tx[subjectHits(ol)]
+var_ol
+tx_ol
+vardf <- as.data.frame(var_ol,row.names = 1:nrow(as.data.frame(ranges(var_ol,use.mcols = TRUE)))) 
+head(vardf)
+txdf <- as.data.frame(tx_ol,row.names = 1:nrow(as.data.frame(ranges(tx_ol))))
+head(txdf)
+vardf$tx <- txdf$tx_name
+head(vardf)
+vardf_tx <- vardf
+head(vardf_tx)
+dim(vardf_tx)
+
+```
+
+# Gene Intercept
+
+```{r,gene int, results='hide'}
+
+gx <- genes(txdb)
+ol <- findOverlaps(rd,gx,select = "all")
+ol
+
+var_ol <- rd[queryHits(ol)]
+gx_ol <- gx[subjectHits(ol)]
+var_ol
+
+vardf <- as.data.frame(var_ol,row.names = 1:nrow(as.data.frame(ranges(var_ol))))
+vardf$ALT <- as.character(GenomicRanges::elementMetadata(var_ol)$ALT)
+head(vardf)
+
+gxdf <- as.data.frame(gx_ol,row.names = 1:nrow(as.data.frame(ranges(gx_ol))))
+head(gxdf)
+vardf$gene <- gxdf$gene_id
+
+head(vardf)
+write.table(x=vardf,file="vardf_erp.tsv",quote = FALSE,sep = "\t",row.names = FALSE)
+
+```
+
+# Locating and merging the gene names 
+
+```{r, gene names}
+
+genenames <- read.table("Mus_musculus.GRCm39.104.gff3.genenames.tsv", header = FALSE, sep = "\t", quote = "")
+#genenames <- subset(genenames, V1 != "chrUn_GL456393" & V1 != "chr4_GL456216_random")
+colnames(genenames) <- c("Ensembl ID","Gene Name")
+head(genenames)
+
+gene_variants <- merge(genenames, vardf,by.x="Ensembl ID", by.y="gene")
+head(gene_variants)
+gene_variants
+
+#At the start of the investigation it is evident that all samples has 4 types of variation, which are Deletions, Inversion, Duplication and Break-ends. 
+del_variants <- subset(gene_variants, ALT=="<DEL>")
+del_variants$seqnames <- gsub("^","chr",del_variants$seqnames)
+del_variants
+
+dup_variants <- subset(gene_variants, ALT=="<DUP>")
+dup_variants$seqnames <- gsub("^","chr",dup_variants$seqnames)
+dup_variants
+
+inv_variants <- subset(gene_variants, ALT=="<INV>")
+inv_variants$seqnames <- gsub("^","chr",inv_variants$seqnames)
+inv_variants
+
+breaks_variants <- subset(gene_variants, ALT!="<DUP>" & ALT!="<DEL>" & ALT!="<INV>")
+breaks_variants$seqnames <- gsub("^","chr",breaks_variants$seqnames)
+breaks_variants <- breaks_variants[order(-breaks_variants$QUAL),]
+breaks_variants
+```
+
+# Circos Plot
+
+```{r,mycircos,fig.height=7,fig.width=7}
+
+#Subsetting for a circos plot, showing all variations except inversion
+del_variants <- subset(gt3,svtype=="DEL")[,1:3]
+del_variants$seqnames <- gsub("^","chr",del_variants$seqnames)
+dup_variants <- subset(gt3,svtype=="DUP")[,1:3]
+dup_variants$seqnames <- gsub("^","chr",dup_variants$seqnames)
+dup_variants <- subset(dup_variants, seqnames != "chrMT")
+breaks_variants <- subset(gt3,svtype=="BND")[,c(1,2,2)]
+breaks_variants <- breaks_variants[grep("GL",breaks_variants$seqnames,invert = TRUE),]
+breaks_variants$seqnames <- gsub("^","chr",breaks_variants$seqnames)
+breaks_variants
+
+links <- subset(gt3,svtype=="BND")
+links <- links[grep("GL",links$seqnames,invert = TRUE),]
+links$alt <- gsub("\\[","\\@",links$alt)
+links$alt <- gsub("\\]","\\@",links$alt)
+links$alt <- sapply(strsplit(links$alt,"@"),"[[",2)
+links$chr2 <- sapply(strsplit(links$alt,":"),"[[",1)
+links$start2 <- as.numeric(sapply(strsplit(links$alt,":"),"[[",2))
+links <- links[,c("seqnames","start","start","chr2","start2","start2")]
+links$seqnames <- gsub("^","chr",links$seqnames)
+links$chr2 <- gsub("^","chr",links$chr2)
+links
+
+library("RCircos")
+# performing a mouse genome liftover for the Rcircos plot
+nbedfile <- read.table("ERP_hglft_genome.bed", sep = "\t", quote = "")
+nbedfile <- subset(nbedfile, V1 != "chrUn_GL456393" & V1 != "chr4_GL456216_random")
+nbedfile$V1 <- factor(nbedfile$V1)
+#which(nbedfile$V1 %in% unique(UCSC.Mouse.GRCm38.CytoBandIdeogram$V1))
+head(nbedfile)
+data(UCSC.Mouse.GRCm38.CytoBandIdeogram)
+head(UCSC.Mouse.GRCm38.CytoBandIdeogram)
+
+RCircos.Set.Core.Components(
+	cyto.info=UCSC.Mouse.GRCm38.CytoBandIdeogram,
+	tracks.inside=5, tracks.outside=0)
+
+RCircos.Set.Plot.Area()
+RCircos.Chromosome.Ideogram.Plot()
+
+RCircos.Tile.Plot(tile.data=nbedfile, track.num=1, side="in")
+
+RCircos.Tile.Plot(tile.data=del_variants, track.num=2, side="in")
+
+RCircos.Tile.Plot(tile.data=dup_variants, track.num=3, side="in")
+
+RCircos.Tile.Plot(tile.data=breaks_variants, track.num=4, side="in")
+
+RCircos.Link.Plot(link.data=links, track.num = 5)
+
+```
+
+# Session Information
 
 ```{r, session}
 

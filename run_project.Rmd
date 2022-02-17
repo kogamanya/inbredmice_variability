@@ -29,7 +29,11 @@ library("VariantAnnotation")
 # reading in the GFF files
 #download.file("http://ftp.ensembl.org/pub/release-104/gff3/mus_musculus/Mus_musculus.GRCm39.104.gff3.gz",destfile = "Mus_musculus.GRCm39.104.gff3.gz")
 
-gff <- read.table("Mus_musculus.GRCm39.104.gff3.gz", sep = "\t", quote = "")
+#library("R.utils")
+
+#gunzip("Mus_musculus.GRCm39.104.gff3.gz")
+
+gff <- read.table("Mus_musculus.GRCm39.104.gff3", sep = "\t", quote = "")
 
 #Reading in the 6animals using the most investigated suitable package
 v275 <- readVcf("VCF_SRP199233_GRCm39/SRX5884275_svtyper.vcf", "GRCm39")
@@ -153,7 +157,7 @@ gtx
 #extracting the bed files for the variants regions of this study for further investigation on IGV
 myrownames <- rownames(gtx)
 srp_regions <- do.call(rbind,strsplit(myrownames," "))
-write.table(x=srp_regions,file="srp_regions.bed",quote=FALSE,sep="\t", col.names = FALSE,row.names = FALSE)
+write.table(x=srp_regions,file="Srp_regions.bed",quote=FALSE,sep="\t", col.names = FALSE,row.names = FALSE)
 
 rd <- rd[rows,]
 rd
@@ -182,7 +186,7 @@ library(TxDb.Mmusculus.UCSC.mm39.refGene)
 
 ```{r,loadgff, results='hide'}
 
-gff_file <- "Mus_musculus.GRCm39.104.gff3.gz"
+gff_file <- "Mus_musculus.GRCm39.104.gff3"
 txdb <- makeTxDbFromGFF(gff_file, format="gff3")
 
 ```
@@ -231,7 +235,7 @@ head(gxdf)
 vardf$gene <- gxdf$gene_id
 
 head(vardf)
-write.table(x=vardf,file="vardf.tsv",quote = FALSE,sep = "\t",row.names = FALSE)
+write.table(x=vardf,file="vardf_srp.tsv",quote = FALSE,sep = "\t",row.names = FALSE)
 
 ```
 
@@ -239,7 +243,7 @@ write.table(x=vardf,file="vardf.tsv",quote = FALSE,sep = "\t",row.names = FALSE)
 
 ```{r, gene names}
 
-genenames <- read.table("Mus_musculus.GRCm38.98.gff3.genenames.tsv", header = FALSE, sep = "\t", quote = "") # need to extract another genenames for mm39
+genenames <- read.table("Mus_musculus.GRCm39.104.gff3.genenames.tsv", header = FALSE, sep = "\t", quote = "")
 colnames(genenames) <- c("Ensembl ID","Gene Name")
 head(genenames)
 
@@ -247,7 +251,7 @@ gene_variants <- merge(genenames, vardf,by.x="Ensembl ID", by.y="gene")
 head(gene_variants)
 gene_variants
 
-#At the start of the investigation it is evident that the 6 samples has 4 types of variation, which are Deletions, Inversion, Duplication and Break-ends. 
+#At the start of the investigation it is evident that all samples has 4 types of variation, which are Deletions, Inversion, Duplication and Break-ends. 
 del_variants <- subset(gene_variants, ALT=="<DEL>")
 del_variants$seqnames <- gsub("^","chr",del_variants$seqnames)
 del_variants
@@ -293,23 +297,31 @@ links$chr2 <- gsub("^","chr",links$chr2)
 links
 
 library("RCircos")
+# performing a mouse genome liftover for the Rcircos plot
+nbedfile <- read.table("SRP_hglft_genome.bed", sep = "\t", quote = "")
+#nbedfile <- subset(nbedfile, V1 != "chrUn_GL456393" & V1 != "chr4_GL456216_random")
+nbedfile$V1 <- factor(nbedfile$V1)
+#which(nbedfile$V1 %in% unique(UCSC.Mouse.GRCm38.CytoBandIdeogram$V1))
+head(nbedfile)
 data(UCSC.Mouse.GRCm38.CytoBandIdeogram) #decision and answers needed for the Circos mouse genome
 head(UCSC.Mouse.GRCm38.CytoBandIdeogram)
 
 RCircos.Set.Core.Components(
 	cyto.info=UCSC.Mouse.GRCm38.CytoBandIdeogram,
-	tracks.inside=4, tracks.outside=0)
+	tracks.inside=5, tracks.outside=0)
 
 RCircos.Set.Plot.Area()
 RCircos.Chromosome.Ideogram.Plot()
 
-RCircos.Tile.Plot(tile.data=del_variants, track.num=1, side="in")
+RCircos.Tile.Plot(tile.data=nbedfile, track.num=1, side="in")
 
-RCircos.Tile.Plot(tile.data=dup_variants, track.num=2, side="in")
+RCircos.Tile.Plot(tile.data=del_variants, track.num=2, side="in")
 
-RCircos.Tile.Plot(tile.data=breaks_variants, track.num=3, side="in")
+RCircos.Tile.Plot(tile.data=dup_variants, track.num=3, side="in")
 
-RCircos.Link.Plot(link.data=links, track.num = 4)
+RCircos.Tile.Plot(tile.data=breaks_variants, track.num=4, side="in")
+
+RCircos.Link.Plot(link.data=links, track.num = 5)
 
 ```
 
