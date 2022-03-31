@@ -22,7 +22,7 @@ variants <- readr::read_tsv("ERP_str_res/ERP011529_merge.outlier_locus.tsv", col
 
 #creating a new row showing the subset of repeats that took place only in all samples. 
 variants$length <- unlist(lapply(strsplit(variants$counts,","),length))
-variants <- subset(variants, length >1)
+variants <- subset(variants, length >8)
 
 #extracting the counts column and converting to numeric
 df_counts <- do.call(rbind,strsplit(variants$counts,",", fixed=TRUE))
@@ -34,7 +34,7 @@ df_counts <- apply(df_counts, MARGIN = 2, FUN = as.numeric)
 ```{r,hit1,fig.height=7,fig.width=7}
 #deciding on our rownames and colnames
 rownames(df_counts) <- paste(variants$contig,variants$start,variants$end,variants$motif)
-colnames(df_counts) <- c("g06","g07","g08") 
+colnames(df_counts) <- c("g06","g07","g08","g09","g10","g11","g12","g13","g14") 
 
 #extracting the bed files for the repeats regions of this analysis for further investigation on IGV
 str_rownames <- rownames(df_counts)
