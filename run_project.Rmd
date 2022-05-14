@@ -1,5 +1,5 @@
 ---
-title: "Research studies on SRP_199233 using the mm39 reference genome"
+title: "Priliminary SV analysis with SRP199233 data sets of mm39 reference genome"
 author: "Kingsley Isaac Ogamanya & Mark Ziemann"
 date: "`r Sys.Date()`"
 output:
