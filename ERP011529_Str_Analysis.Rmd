@@ -34,7 +34,7 @@ df_counts <- apply(df_counts, MARGIN = 2, FUN = as.numeric)
 ```{r,hit1,fig.height=7,fig.width=7}
 #deciding on our rownames and colnames
 rownames(df_counts) <- paste(variants$contig,variants$start,variants$end,variants$motif)
-colnames(df_counts) <- c("g06","g07","g08","g09","g10","g11","g12","g13","g14") 
+colnames(df_counts) <- c("g06_F","g07_F","g08_F","g09_F","g10_M","g11_M","g12_M","g13_F","g14_M") 
 
 #extracting the bed files for the repeats regions of this analysis for further investigation on IGV
 str_rownames <- rownames(df_counts)
@@ -44,7 +44,7 @@ write.table(x=str_regions,file="ERP_Str_regions.bed",quote=FALSE,sep="\t", col.n
 #plotting the heatmap showing the repeats on each sample
 colfunc <- colorRampPalette(c("blue", "red"))
 library(gplots)
-heatmap.2(df_counts, trace = "none", scale = "none", 
+heatmap.2(df_counts, trace = "none", scale = "row", 
   dendrogram='none', Rowv=FALSE, Colv=FALSE, col=colfunc(25),
   margins = c(5,20), cexRow=.8, cexCol=.9,  main="STRs")
 ```
@@ -61,8 +61,8 @@ cv <- function(x) {
 #plotting a graph showing the coefficient variation on each row of variants$counts for the samples
 my_cv <- apply(df_counts, MARGIN = 1, FUN = cv)
 my_cv[order(my_cv)]
-par(mar =c(5,15,3,1))
-barplot(my_cv[order(my_cv)], horiz = TRUE,las =1,xlab = "CV")
+par(mar =c(5,20,3,1))
+barplot(my_cv[order(my_cv)], horiz = TRUE,las =1, main = "Coefficient of Variation", xlab = "Expansion of STRs Frequency")
 
 ```
 
