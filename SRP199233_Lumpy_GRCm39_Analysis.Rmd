@@ -107,6 +107,11 @@ gtx <- apply(gt,2,function(x) { as.numeric(as.factor(x))})
 rownames(gtx) <- paste(gt3$seqnames,gt3$start,gt3$END,gt3$alt)
 gtx
 
+library(kableExtra)
+gtx %>%
+	  kbl(caption = "my caption") %>%
+	  kable_classic(full_width = F, html_font = "Cambria")
+
 #extracting the bed files for the variants regions of this study for further investigation on IGV
 myrownames <- rownames(gtx)
 Srp_regions <- do.call(rbind,strsplit(myrownames," "))
