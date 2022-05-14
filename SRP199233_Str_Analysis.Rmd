@@ -43,7 +43,7 @@ write.table(x=str_regions,file="SRP_Str_regions.bed",quote=FALSE,sep="\t", col.n
 #plotting the heatmap showing the repeats on each sample
 colfunc <- colorRampPalette(c("blue", "red"))
 library(gplots)
-heatmap.2(df_counts, trace = "none", scale = "none", 
+heatmap.2(df_counts, trace = "none", scale = "row", 
   dendrogram='none', Rowv=FALSE, Colv=FALSE, col=colfunc(25),
   margins = c(5,20), cexRow=.8, cexCol=.9,  main="STRs")
 ```
@@ -60,8 +60,8 @@ cv <- function(x) {
 #plotting a graph showing the coefficient variation on each row of variants$counts for the samples
 my_cv <- apply(df_counts, MARGIN = 1, FUN = cv)
 my_cv[order(my_cv)]
-par(mar =c(5,15,3,1))
-barplot(my_cv[order(my_cv)], horiz = TRUE,las =1,xlab = "CV")
+par(mar =c(5,22,3,1))
+barplot(my_cv[order(my_cv)], horiz = TRUE,las =1, main= "Coefficient of Variation", xlab = "Expansion of STRs Frequency")
 
 ```
 
